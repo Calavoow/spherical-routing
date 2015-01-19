@@ -6,7 +6,7 @@ object Units {
 	case class Label(level: Int, label: Int)
 
 	type Node = Label
-	val icosahedron = Graph[Node, UnDiEdge](
+	val icosahedron = Graph[Label, UnDiEdge](
 		// Outer nodes
 		Label(0,0) ~ Label(0,1),
 		Label(0,0) ~ Label(0,2),

@@ -14,6 +14,7 @@ object Main {
 			Label(0,4) ~ Label(0,3),
 			Label(0,1) ~ Label(0,5)
 		)
-		SphereApproximation.subdivide(g)
+		val subdivided = SphereApproximation.subdivide(g)
+		println(subdivided)
 	}
 }
