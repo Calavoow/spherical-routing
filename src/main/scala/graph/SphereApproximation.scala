@@ -14,19 +14,22 @@ object SphereApproximation {
 
 	def subdivide(g: Graph[Node, UnDiEdge]) = {
 		// Each set represents a triangle and because it is a set of sets, any duplicate sets are filtered out
-		val n = g.nodes.head.neighbors.subsets(2)
 		val tri = triangles(g)
 	}
 
 	def triangles(g: Graph[Node, UnDiEdge]) = {
-		for(node ← g.nodes;
-		    // All neighbour subsets of size 2
-		    adjacentNeighbours ← node.neighbors.subsets(2)
-		    // Check if the neighbours are adjacent
-		    if adjacentNeighbours.forall(v ⇒ adjacentNeighbours.-(v).subsetOf(v.neighbors))
-		) yield {
-			// The 2 adjacent neighbours plus the current node form a triangle.
-			adjacentNeighbours.+(node)
+		val r = for(node ← g.nodes) yield {
+			// The subgraph containing neighbors of node and their edges
+			val subGraph = g.filter(g.having(_.diSuccessors.contains(node)))
+
+			// For every node in the subgraph, find all adjacentnodes and create a triangle.
+			for(adjacentNode ← subGraph.nodes;
+						triangleNode ← adjacentNode.diSuccessors) yield {
+				// A triangle is represented by a Set of size 3.
+				// This way triangles can easily be made distinct.
+				Set(node,adjacentNode,triangleNode)
+			}
 		}
+		r.reduce(_ ++ _)
 	}
 }

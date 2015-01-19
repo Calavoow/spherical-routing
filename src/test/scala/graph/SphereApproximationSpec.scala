@@ -7,29 +7,32 @@ import scalax.collection.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 class SphereApproximationSpec extends FlatSpec with Matchers {
+	import SphereApproximation._
 	"Triangles" should "be correctly found in a triangular graph" in {
 		val g = Graph[Node, UnDiEdge](
-			List(1) ~ List(2),
-			List(2) ~ List(3),
-			List(3) ~ List(1)
+			Label(0,1) ~ Label(0,2),
+			Label(0,2) ~ Label(0,3),
+			Label(0,3) ~ Label(0,1)
 		)
-		SphereApproximation.triangles(g) should equal(Set(
-			Set(List(1), List(3), List(2))
+		triangles(g) should equal(Set(
+			Set(Label(0,1), Label(0,3), Label(0,2))
 		))
 	}
 
 	it should "be correctly found in a moderate graph" in {
 		val g = Graph[Node, UnDiEdge](
-			List(1) ~ List(2),
-			List(2) ~ List(3),
-			List(3) ~ List(1),
-			List(2) ~ List(4),
-			List(4) ~ List(3),
-			List(1) ~ List(5)
+			Label(0,1) ~ Label(0,2),
+			Label(0,2) ~ Label(0,3),
+			Label(0,3) ~ Label(0,1),
+			Label(0,2) ~ Label(0,4),
+			Label(0,4) ~ Label(0,3),
+			Label(0,1) ~ Label(0,5)
 		)
-		SphereApproximation.triangles(g) should equal(Set(
-			Set(List(1), List(3), List(2)),
-			Set(List(4), List(3), List(2))
-		))
+		triangles(g) should equal(
+			Set(
+				Set(Label(0,1), Label(0,3), Label(0,2)),
+				Set(Label(0,4), Label(0,3), Label(0,2))
+			)
+		)
 	}
 }

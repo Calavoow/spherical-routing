@@ -10,7 +10,6 @@ object Util {
 			(for (node ← nodes;
 			                  toNode ← nodes) yield {
 				val path = node.shortestPathTo(toNode)
-				println(path)
 				path.map(p ⇒ p.edges.size).getOrElse(Int.MaxValue)
 			}).max
 		}
