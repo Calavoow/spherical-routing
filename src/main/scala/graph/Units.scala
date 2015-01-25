@@ -1,5 +1,5 @@
 package graph
-import scalax.collection.Graph
+import scalax.collection.immutable.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 object Units {

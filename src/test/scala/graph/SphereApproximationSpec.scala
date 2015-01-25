@@ -2,8 +2,9 @@ package graph
 
 import graph.Units._
 import org.scalatest.{Matchers, FlatSpec}
+import Util.triangles
 
-import scalax.collection.Graph
+import scalax.collection.immutable.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 class SphereApproximationSpec extends FlatSpec with Matchers {
