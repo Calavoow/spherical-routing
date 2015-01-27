@@ -40,4 +40,18 @@ object Util {
 			Set[g.NodeT](node,g.get(adjacentNode),g.get(triangleNode))
 		}
 	}
+
+	def trianglesAround(g: Graph[Node,UnDiEdge])(node: g.NodeT) : scala.collection.Set[Set[g.NodeT]] = {
+		// The subgraph containing neighbors of node and their edges
+		val subGraph = g.filter(g.having(_.diSuccessors.contains(node)))
+		for(
+			// For every node in the subgraph, find all adjacent nodes and create a triangle.
+		    adjacentNode : subGraph.NodeT ← subGraph.nodes;
+		    triangleNode : subGraph.NodeT ← adjacentNode.diSuccessors
+		) yield {
+			// A triangle is represented by a Set of size 3.
+			// This way triangles can easily be made distinct.
+			Set[g.NodeT](node,g.get(adjacentNode),g.get(triangleNode))
+		}
+	}
 }
