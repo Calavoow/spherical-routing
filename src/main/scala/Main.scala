@@ -29,29 +29,29 @@ object Main {
 		writeToFile("graph_tri1.dot", Dot.toDot(g2))
 
 
-		val streamApprox = Stream.iterate(g) { graph ⇒
-			println("next calculated")
+		val iterateSubdivs = Iterator.iterate(g) { graph ⇒
 			SphereApproximation.subdivide(graph)
-		} take 5
+		} take 6
 
-		streamApprox.foreach { graph ⇒
+		val occurences = iterateSubdivs.map { graph ⇒
 			val paths = Paths.all(graph)
 			val pathsThroughLayer = paths.map { path ⇒
 				path.edges.groupBy { edge ⇒
 					edge.nodes.map(_.level).max
 				} mapValues(_.size)
 			}
-			val nrPathsPerLayer = pathsThroughLayer.reduce { (accum, nrPathsPerLayer) ⇒
+			val nrPathsPerLayer = pathsThroughLayer.reduceLeft { (accum, nrPathsPerLayer) ⇒
 				accum ++ nrPathsPerLayer.map {
 					case (k,v) ⇒ k → (v + accum.getOrElse(k,0))
 				}
 			}
-			println(nrPathsPerLayer.toSeq.sortBy {
+			nrPathsPerLayer.toSeq.sortBy {
 				case (layer, _) ⇒ layer
 			}.map {
-				case (layer, occurrences) ⇒ s"layer: $layer, occurrences: $occurrences"
-			}.mkString("\n"))
+				case (layer, occurrences) ⇒ s"$occurrences"
+			}.mkString(",")
 		}
+		writeToFile("occurences.csv", occurences.mkString("\n"))
 
 //		val g = Units.icosahedron
 //		writeToFile("graph0.dot", Dot.toDot(g))

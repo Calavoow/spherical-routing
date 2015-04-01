@@ -7,12 +7,10 @@ import Units.Node
 
 object Paths {
 
-	def all(g: Graph[Node, UnDiEdge]) = {
-		val nodeCombinations = g.nodes.toList.combinations(2).toSeq
-		val paths = nodeCombinations.map {
+	def all(g: Graph[Node, UnDiEdge]) : Stream[g.Path] = {
+		g.nodes.toList.combinations(2).toStream.map {
 			case List(node1,node2) ⇒
-				node1.pathTo(node2).toSeq
+				node1.shortestPathTo(node2).get
 		}
-		paths.flatten
 	}
 }
