@@ -5,7 +5,7 @@ import graph.Units.{Label, Node}
 import scala.annotation.tailrec
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
-
+/*
 object Routing {
 	def route(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT): g.Path = {
 		val path = g.newPathBuilder(from)
@@ -95,3 +95,4 @@ object Routing {
 		subSplitRoute(Set(NodePath(List(alpha))), Set(NodePath(List(gamma))), k)
 	}
 }
+*/
