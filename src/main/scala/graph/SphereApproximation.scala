@@ -15,10 +15,21 @@ object SphereApproximation {
 		// Each set represents a triangle and because it is a set of sets, any duplicate sets are filtered out
 		val tri = Util.triangles(g)
 
+		val maxLabels = for(node ← g.nodes;
+			labelSet ← node.label) yield {
+			labelSet.max
+		}
+		val currentMaxLabel = maxLabels.max
 		// Add a unique label to each edge.
-		val edgeLabels = (for((edge, index) ← g.edges.zipWithIndex) yield {
-			val parentsLevel = edge.nodes.head.level
-			edge.toOuter → Label(parentsLevel + 1, index)
+		val edgeLabels = (for((edge, index) <- g.edges.zipWithIndex) yield {
+			val parents = edge.nodes.toIterator
+			val p1 = parents.next
+			val p2 = parents.next
+			val parentsLabel = p1.label.zipAll(p2.label,Set.empty[Int],Set.empty[Int]).map {
+				case (s1, s2) ⇒ s1 union s2
+			}
+			println(index)
+			edge.toOuter → Label(parentsLabel :+ Set(currentMaxLabel + index + 1))
 		}).toMap
 
 		val newEdges = g.edges.flatMap { edge ⇒

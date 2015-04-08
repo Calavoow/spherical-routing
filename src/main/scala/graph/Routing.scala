@@ -5,8 +5,89 @@ import graph.Units.{Label, Node}
 import scala.annotation.tailrec
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
-/*
 object Routing {
+	def route(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT): g.Path = {
+		val path = g.newPathBuilder(from)
+		path.add(from)
+		// Step 1 Check if they are adjacent
+		if(path.add(to)) return path.result()
+
+		// Step 2: Check if there is a node in the triangles around to and from in common
+		//val tri = Util.triangles(g)
+		//val fromTriangles = tri.filter { triangle ⇒ triangle.contains(from) }
+		//val toTriangles = tri.filter { triangle ⇒ triangle.contains(to) }
+
+		// First flatten the triangles into sets of Nodes, then intersect them to find a common node.
+		val commonAncestor = closestAncestor(g)(from, to)
+		val ancestorPath : g.Path = commonAncestor match {
+			case None =>
+				val lowestGraph = g filter g.having(node = _.label.size == 1)
+				val paths = for(parent1 <- from.label.head;
+					parent2 <- to.label.head) yield {
+					val p1 = lowestGraph get Label(Vector(Set(parent1)))
+					val p2 = lowestGraph get Label(Vector(Set(parent2)))
+					p1.shortestPathTo(p2).get
+				}
+				val lowestPath = paths.minBy(_.size)
+				val gNodes = lowestPath.nodes.map { lowNode =>
+					g get lowNode
+				}
+				val builder = g.newPathBuilder(gNodes.head)
+				builder.++=(gNodes.tail).result()
+
+			case Some(ancestor) =>
+				g.newPathBuilder(ancestor).result()
+		}
+
+//		val commonNodes = fromTriangles.flatten intersect toTriangles.flatten
+//		commonNodes.headOption match {
+//			case Some(node) ⇒
+//				val pathBuild = path.add(node)
+//				assert(pathBuild, "Intermediate node could not be added")
+//				val finalBuild = path.add(to)
+//				assert(finalBuild, "Final node could not be added")
+//				return path.result()
+//			case None ⇒ // No common node
+//		}
+//
+//		splitRoute(g)(from, to, Math.max(from.level, to.level))
+		null
+	}
+
+	def closestAncestor(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT) : Option[g.NodeT] = {
+		val zippedLabels = from.label.zipAll(to.label, Set.empty[Int], Set.empty[Int])
+		val oId = zippedLabels.reverse.find {
+			case (l1, l2) => (l1 intersect l2).isDefined
+		} map {
+			case (l1, l2) => (l1 intersect l2).head
+		}
+		oId.flatMap { id =>
+			g.nodes.find(_.label.contains(id))
+		}
+	}
+
+	def labelRoute(g : Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT) : g.Path = {
+		val List(parent, child) = List(from, to).sortBy(_.label.size)
+
+	}
+
+	@tailrec
+	private def recursiveLabelRoute(g: Graph[Node, UnDiEdge])(child: g.NodeT, parent: g.NodeT, path : List[g.NodeT]) : g.Path = {
+		if(child == parent) {
+			val builder = g.newPathBuilder(child)
+			builder ++= path
+			builder.result()
+		} else {
+			val bestNeighbor = parent.neighbors.maxBy { neighbor : g.NodeT =>
+				child.label.find(_.contains(neighbor.id))
+			}
+			recursiveLabelRoute(g)(child, bestNeighbor, bestNeighbor :: path)
+		}
+	}
+
+//	def routeLowestLayer(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT)
+
+	/*
 	def route(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT): g.Path = {
 		val path = g.newPathBuilder(from)
 		path.add(from)
@@ -94,5 +175,5 @@ object Routing {
 
 		subSplitRoute(Set(NodePath(List(alpha))), Set(NodePath(List(gamma))), k)
 	}
+	*/
 }
-*/

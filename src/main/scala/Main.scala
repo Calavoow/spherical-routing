@@ -3,10 +3,10 @@ import java.io.PrintWriter
 import graph._
 import graph.Units.{Label, Node}
 
+import scala.concurrent.Future
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scalax.collection.io.dot._
-import implicits._
 
 object Main {
 	def main(args: Array[String]) {
@@ -20,9 +20,9 @@ object Main {
 //		)
 //		val g = Units.icosahedron
 		val g = Graph[Node, UnDiEdge] (
-			Label(0,1) ~ Label(0,2),
-			Label(0,2) ~ Label(0,3),
-			Label(0,3) ~ Label(0,1)
+			Label(Vector(Set(1))) ~ Label(Vector(Set(2))),
+			Label(Vector(Set(2))) ~ Label(Vector(Set(3))),
+			Label(Vector(Set(3))) ~ Label(Vector(Set(1)))
 		)
  		val g2 = SphereApproximation.subdivide(g)
 		println(g2.toString)
@@ -37,7 +37,7 @@ object Main {
 			val paths = Paths.all(graph)
 			val pathsThroughLayer = paths.map { path ⇒
 				path.edges.groupBy { edge ⇒
-					edge.nodes.map(_.level).max
+					edge.nodes.map(_.label.size).max
 				} mapValues(_.size)
 			}
 			val nrPathsPerLayer = pathsThroughLayer.reduceLeft { (accum, nrPathsPerLayer) ⇒
