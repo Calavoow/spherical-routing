@@ -37,7 +37,7 @@ object Main {
 			val paths = Paths.all(graph)
 			val pathsThroughLayer = paths.map { path ⇒
 				path.edges.groupBy { edge ⇒
-					edge.nodes.map(_.label.size).max
+					edge.nodes.map(_.parentalLabel.size).max
 				} mapValues(_.size)
 			}
 			val nrPathsPerLayer = pathsThroughLayer.reduceLeft { (accum, nrPathsPerLayer) ⇒

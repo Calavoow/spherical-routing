@@ -5,6 +5,8 @@ import graph.Units.{Label, Node}
 import scala.annotation.tailrec
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import util.Random
+
 object Routing {
 	def route(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT): g.Path = {
 		val path = g.newPathBuilder(from)
@@ -21,9 +23,9 @@ object Routing {
 		val commonAncestor = closestAncestor(g)(from, to)
 		val ancestorPath : g.Path = commonAncestor match {
 			case None =>
-				val lowestGraph = g filter g.having(node = _.label.size == 1)
-				val paths = for(parent1 <- from.label.head;
-					parent2 <- to.label.head) yield {
+				val lowestGraph = g filter g.having(node = _.parentalLabel.size == 1)
+				val paths = for(parent1 <- from.parentalLabel.head;
+					parent2 <- to.parentalLabel.head) yield {
 					val p1 = lowestGraph get Label(Vector(Set(parent1)))
 					val p2 = lowestGraph get Label(Vector(Set(parent2)))
 					p1.shortestPathTo(p2).get
@@ -56,32 +58,41 @@ object Routing {
 
 	def closestAncestor(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT) : Option[g.NodeT] = {
 		val zippedLabels = from.label.zipAll(to.label, Set.empty[Int], Set.empty[Int])
-		val oId = zippedLabels.reverse.find {
-			case (l1, l2) => (l1 intersect l2).isDefined
-		} map {
-			case (l1, l2) => (l1 intersect l2).head
+		val closestAncestor = zippedLabels.reverse.map {
+			case (l1, l2) => l1 intersect l2
+		} find {
+			_.nonEmpty
+		} map { ids ⇒
+			Random.shuffle(ids).head // Randomly decide between ancestors.
 		}
-		oId.flatMap { id =>
-			g.nodes.find(_.label.contains(id))
+
+		closestAncestor.flatMap { id =>
+			g.nodes.find(_.parentalLabel.contains(id))
 		}
-	}
-
-	def labelRoute(g : Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT) : g.Path = {
-		val List(parent, child) = List(from, to).sortBy(_.label.size)
-
 	}
 
 	@tailrec
-	private def recursiveLabelRoute(g: Graph[Node, UnDiEdge])(child: g.NodeT, parent: g.NodeT, path : List[g.NodeT]) : g.Path = {
+	private def labelRoute(g: Graph[Node, UnDiEdge])(child: g.NodeT, parent: g.NodeT, path : List[g.NodeT] = Nil) : g.Path = {
 		if(child == parent) {
 			val builder = g.newPathBuilder(child)
 			builder ++= path
 			builder.result()
 		} else {
-			val bestNeighbor = parent.neighbors.maxBy { neighbor : g.NodeT =>
-				child.label.find(_.contains(neighbor.id))
-			}
-			recursiveLabelRoute(g)(child, bestNeighbor, bestNeighbor :: path)
+//			val bestNeighbor = parent.neighbors.maxBy[Int] { neighbor : g.NodeT =>
+//				val contains = child.label.zipWithIndex.find(_._1.contains(neighbor.id))
+//				contains.map(_._2).getOrElse(-1) // Where -1 means that they did not have a something in common.
+//			}
+			val neighborIds = parent.neighbors.map(_.id)
+			val eligibleNeighbors = child.label.reverse.map {
+				_.intersect(neighborIds)
+			} find {
+				_.nonEmpty
+			} get // There must be an eligible neighbor.
+
+			val bestNeighbor = (parent.neighbors.find { neighbor ⇒
+				eligibleNeighbors.contains(neighbor.id)
+			}).get // Assume it exists.
+			labelRoute(g)(child, bestNeighbor, bestNeighbor :: path)
 		}
 	}
 
