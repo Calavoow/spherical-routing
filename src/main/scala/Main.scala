@@ -10,48 +10,46 @@ import scalax.collection.io.dot._
 
 object Main {
 	def main(args: Array[String]) {
-//		val g = Graph[Node, UnDiEdge](
-//			Label(0,1) ~ Label(0,2),
-//			Label(0,2) ~ Label(0,3),
-//			Label(0,3) ~ Label(0,1),
-//			Label(0,2) ~ Label(0,4),
-//			Label(0,4) ~ Label(0,3),
-//			Label(0,1) ~ Label(0,5)
-//		)
 //		val g = Units.icosahedron
 		val g = Graph[Node, UnDiEdge] (
 			Label(Vector(Set(1))) ~ Label(Vector(Set(2))),
 			Label(Vector(Set(2))) ~ Label(Vector(Set(3))),
 			Label(Vector(Set(3))) ~ Label(Vector(Set(1)))
 		)
- 		val g2 = SphereApproximation.subdivide(g)
-		println(g2.toString)
-		writeToFile("graph_tri1.dot", Dot.toDot(g2))
+// 		val g2 = SphereApproximation.subdivide(g)
+//		writeToFile("graph_tri1.dot", Dot.toDot(g2))
 
 
 		val iterateSubdivs = Iterator.iterate(g) { graph ⇒
+			println("Calculating subdivision")
 			SphereApproximation.subdivide(graph)
-		} take 6
-
-		val occurences = iterateSubdivs.map { graph ⇒
-			val paths = Paths.all(graph)
-			val pathsThroughLayer = paths.map { path ⇒
-				path.edges.groupBy { edge ⇒
-					edge.nodes.map(_.parentalLabel.size).max
-				} mapValues(_.size)
-			}
-			val nrPathsPerLayer = pathsThroughLayer.reduceLeft { (accum, nrPathsPerLayer) ⇒
-				accum ++ nrPathsPerLayer.map {
-					case (k,v) ⇒ k → (v + accum.getOrElse(k,0))
-				}
-			}
-			nrPathsPerLayer.toSeq.sortBy {
-				case (layer, _) ⇒ layer
-			}.map {
-				case (layer, occurrences) ⇒ s"$occurrences"
-			}.mkString(",")
 		}
-		writeToFile("occurences.csv", occurences.mkString("\n"))
+
+//		val occurences = iterateSubdivs.map { graph ⇒
+//			val paths = Paths.all(graph)
+//			val pathsThroughLayer = paths.map { path ⇒
+//				path.edges.groupBy { edge ⇒
+//					edge.nodes.map(_.parentalLabel.size).max
+//				} mapValues(_.size)
+//			}
+//			val nrPathsPerLayer = pathsThroughLayer.reduceLeft { (accum, nrPathsPerLayer) ⇒
+//				accum ++ nrPathsPerLayer.map {
+//					case (k,v) ⇒ k → (v + accum.getOrElse(k,0))
+//				}
+//			}
+//			nrPathsPerLayer.toSeq.sortBy {
+//				case (layer, _) ⇒ layer
+//			}.map {
+//				case (layer, occurrences) ⇒ s"$occurrences"
+//			}.mkString(",")
+//		}
+//		writeToFile("occurences.csv", occurences.mkString("\n"))
+
+		val routeGraph = iterateSubdivs.drop(10).next
+		val from = routeGraph.get(Label(1))
+		val to = routeGraph.get(Label(2))
+		val path = Routing.route(routeGraph)(from, to)
+		println(path)
 
 //		val g = Units.icosahedron
 //		writeToFile("graph0.dot", Dot.toDot(g))

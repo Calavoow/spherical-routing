@@ -3,6 +3,10 @@ import scalax.collection.immutable.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 object Units {
+	object Label {
+		def apply(i : Int) = new Label(Vector(Set(i)))
+	}
+
 	case class Label(parentalLabel: IndexedSeq[Set[Int]]) {
 		lazy val id = parentalLabel.last.head
 		lazy val label = {
@@ -15,6 +19,11 @@ object Units {
 						label_k
 					}
 			}
+		}
+
+		def layer = parentalLabel.size - 1
+		override def toString = {
+			"[" + parentalLabel.map(_.mkString("{",",","}")).mkString(",") + "]"
 		}
 	}
 
