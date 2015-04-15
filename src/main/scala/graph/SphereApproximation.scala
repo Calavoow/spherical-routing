@@ -11,7 +11,13 @@ object SphereApproximation {
 		val ico = Units.icosahedron
 	}
 
-	def subdivide(g: Graph[Node, UnDiEdge]) = {
+	def repeatedSubdivision(g: Graph[Node, UnDiEdge]): Iterator[Graph[Node, UnDiEdge]] = {
+		Iterator.iterate(g) { graph =>
+			subdivide(graph)
+		}
+	}
+
+	def subdivide(g: Graph[Node, UnDiEdge]) : Graph[Node, UnDiEdge] = {
 		// Each set represents a triangle and because it is a set of sets, any duplicate sets are filtered out
 //		val tri = Util.triangles(g)
 

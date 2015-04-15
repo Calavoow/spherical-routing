@@ -36,4 +36,17 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 			)
 		)
 	}
+
+	"Subdivison" should "subdivide a triangle" in {
+		val g = Units.triangle
+		val g1 = SphereApproximation.subdivide(g)
+		g1.nodes.size should equal(6)
+		g1.edges.size should equal(12)
+		g1.nodes should contain( Label(1) )
+		g1.nodes should contain( Label(2) )
+		g1.nodes should contain( Label(3) )
+		g1.nodes.find(_.parentalLabel.head == Set(1,2)) should be('defined)
+		g1.nodes.find(_.parentalLabel.head == Set(2,3)) should be('defined)
+		g1.nodes.find(_.parentalLabel.head == Set(1,3)) should be('defined)
+	}
 }

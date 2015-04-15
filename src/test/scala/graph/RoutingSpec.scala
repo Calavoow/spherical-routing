@@ -40,4 +40,15 @@ class RoutingSpec extends FlatSpec with Matchers {
 		route.edges.toList should (equal (List(Label(Vector(Set(1))) ~ Label(Vector(Set(3))), Label(Vector(Set(3))) ~ Label(Vector(Set(4)))))
 			or equal (List(Label(Vector(Set(1))) ~ Label(Vector(Set(2))), Label(Vector(Set(2))) ~ Label(Vector(Set(4))))))
 	}
+
+	it should "find an m+1 path on 2 subdivisions" in {
+		// Make the three times subdivision graph.
+		val g3 = SphereApproximation.repeatedSubdivision(triangle).drop(2).next
+		g3.nodes.toSeq.combinations(2).foreach {
+			case Seq(node1, node2) =>
+				val shortestPath = node1.shortestPathTo(node2).get
+				val route = Routing.route(g3)(node1, node2)
+				assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route.\n$shortestPath\n$route")
+		}
+	}
 }

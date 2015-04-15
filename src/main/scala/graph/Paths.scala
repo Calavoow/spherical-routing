@@ -7,8 +7,8 @@ import Units.Node
 
 object Paths {
 
-	def all(g: Graph[Node, UnDiEdge]) : Stream[g.Path] = {
-		g.nodes.toList.combinations(2).toStream.map {
+	def all(g: Graph[Node, UnDiEdge]) : Iterator[g.Path] = {
+		g.nodes.toList.combinations(2).map {
 			case List(node1,node2) ⇒
 				node1.shortestPathTo(node2).get
 		}

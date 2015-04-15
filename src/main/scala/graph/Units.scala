@@ -28,7 +28,7 @@ object Units {
 	}
 
 	type Node = Label
-	val icosahedron = Graph[Label, UnDiEdge](
+	val icosahedron = Graph[Node, UnDiEdge](
 		// Outer nodes
 		Label(Vector(Set(0))) ~ Label(Vector(Set(1))),
 		Label(Vector(Set(0))) ~ Label(Vector(Set(2))),
@@ -63,5 +63,11 @@ object Units {
 		Label(Vector(Set(3))) ~ Label(Vector(Set(7))),
 		Label(Vector(Set(4))) ~ Label(Vector(Set(8))),
 		Label(Vector(Set(5))) ~ Label(Vector(Set(9)))
+	)
+
+	val triangle = Graph[Node, UnDiEdge](
+		Label(Vector(Set(1))) ~ Label(Vector(Set(2))),
+		Label(Vector(Set(2))) ~ Label(Vector(Set(3))),
+		Label(Vector(Set(3))) ~ Label(Vector(Set(1)))
 	)
 }

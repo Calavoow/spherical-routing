@@ -20,9 +20,13 @@ object Main {
 //		writeToFile("graph_tri1.dot", Dot.toDot(g2))
 
 
+		var counter = 1
 		val iterateSubdivs = Iterator.iterate(g) { graph ⇒
 			println("Calculating subdivision")
-			SphereApproximation.subdivide(graph)
+			val subdiv = SphereApproximation.subdivide(graph)
+			writeToFile(s"graph_tri$counter.dot", Dot.toDot(subdiv))
+			counter+=1
+			subdiv
 		}
 
 //		val occurences = iterateSubdivs.map { graph ⇒
@@ -45,7 +49,7 @@ object Main {
 //		}
 //		writeToFile("occurences.csv", occurences.mkString("\n"))
 
-		val routeGraph = iterateSubdivs.drop(10).next
+		val routeGraph = iterateSubdivs.drop(5).next
 		val from = routeGraph.get(Label(1))
 		val to = routeGraph.get(Label(2))
 		val path = Routing.route(routeGraph)(from, to)
