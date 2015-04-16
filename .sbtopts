@@ -1,2 +1,2 @@
--mem 4096
+-mem 7000
 -jvm-debug 5005

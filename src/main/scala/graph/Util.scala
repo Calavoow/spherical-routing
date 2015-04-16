@@ -5,6 +5,7 @@ import graph.Units._
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphEdge.UnDiEdge
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scala.language.higherKinds
 
 object Util {
 	implicit class RichGraph[N, E[X] <: EdgeLikeIn[X]](g: Graph[N,E]) {
@@ -26,14 +27,14 @@ object Util {
 	 * @return The set of triangles
 	 */
 	def triangles(g: Graph[Node, UnDiEdge]) : scala.collection.Set[Set[g.NodeT]] = {
-		for(node : g.NodeT ← g.nodes;
+		for(node ← g.nodes;
 
             // The subgraph containing neighbors of node and their edges
 		    subGraph = g.filter(g.having(_.diSuccessors.contains(node)));
 
 		    // For every node in the subgraph, find all adjacent nodes and create a triangle.
-			adjacentNode : subGraph.NodeT ← subGraph.nodes;
-			triangleNode : subGraph.NodeT ← adjacentNode.diSuccessors
+			adjacentNode ← subGraph.nodes;
+			triangleNode ← adjacentNode.diSuccessors
 		) yield {
 			// A triangle is represented by a Set of size 3.
 			// This way triangles can easily be made distinct.
@@ -46,8 +47,8 @@ object Util {
 		val subGraph = g.filter(g.having(_.diSuccessors.contains(node)))
 		for(
 			// For every node in the subgraph, find all adjacent nodes and create a triangle.
-		    adjacentNode : subGraph.NodeT ← subGraph.nodes;
-		    triangleNode : subGraph.NodeT ← adjacentNode.diSuccessors
+		    adjacentNode ← subGraph.nodes;
+		    triangleNode ← adjacentNode.diSuccessors
 		) yield {
 			// A triangle is represented by a Set of size 3.
 			// This way triangles can easily be made distinct.

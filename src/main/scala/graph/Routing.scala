@@ -6,9 +6,19 @@ import scala.annotation.tailrec
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import util.Random
+import scala.language.postfixOps
 
 object Routing {
-	def route(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT): g.Path = {
+	/**
+	 * Use the routing algorithm to find a route `from` to the vertex `to`.
+	 *
+	 * @param g The graph to route on.
+	 * @param g0 The base graph (for efficiency).
+	 * @param from The node to route from.
+	 * @param to The node to route towards.
+	 * @return The route.
+	 */
+	def route(g: Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT): g.Path = {
 		val path = g.newPathBuilder(from)
 		path.add(from)
 		// Step 1 Check if they are adjacent
@@ -19,11 +29,10 @@ object Routing {
 		val ancestorPath : g.Path = commonAncestor match {
 			case None =>
 				// For efficiency, reduce the graph to only layer 0.
-				val lowestGraph = g filter g.having(node = _.parentalLabel.size == 1)
 				val paths = for(parent1 <- from.parentalLabel.head;
 					parent2 <- to.parentalLabel.head) yield {
-					val p1 = lowestGraph get Label(Vector(Set(parent1)))
-					val p2 = lowestGraph get Label(Vector(Set(parent2)))
+					val p1 = g0 get Label(Vector(Set(parent1)))
+					val p2 = g0 get Label(Vector(Set(parent2)))
 					p1.shortestPathTo(p2).get // The graph is connected, so there is always a path.
 				}
 				val lowestPath = paths.minBy(_.size)
@@ -47,7 +56,7 @@ object Routing {
 
 	def closestAncestor(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT) : Option[g.NodeT] = {
 		val zippedLabels = from.label.zipAll(to.label, Set.empty[Int], Set.empty[Int])
-		val closestAncestor = zippedLabels.reverse.map {
+		val closestAncestor = zippedLabels.reverseMap {
 			case (l1, l2) => l1 intersect l2
 		} find {
 			_.nonEmpty
@@ -55,8 +64,8 @@ object Routing {
 			Random.shuffle(ids).head // Randomly decide between ancestors.
 		}
 
-		closestAncestor.flatMap { id =>
-			g.nodes.find(_.parentalLabel.contains(id))
+		closestAncestor.map { id : Int =>
+			g.nodes.find(_.id == id).get // This must exist.
 		}
 	}
 
@@ -74,7 +83,7 @@ object Routing {
 //				contains.map(_._2).getOrElse(-1) // Where -1 means that they did not have a something in common.
 //			}
 			val neighborIds = parent.neighbors.map(_.id)
-			val eligibleNeighbors = child.label.reverse.map {
+			val eligibleNeighbors = child.label.reverseMap {
 				_.intersect(neighborIds)
 			} find {
 				_.nonEmpty
