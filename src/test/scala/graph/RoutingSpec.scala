@@ -50,6 +50,15 @@ class RoutingSpec extends FlatSpec with Matchers {
 		(shortPath.edges.size + 1) should be >= route.edges.size
 	}
 
+	it should "find an m+1 path on the face 4 for specific nodes" in {
+		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
+		val node1 = g.get(Label(IndexedSeq(Set(2,3,1), Set(4,6), Set(9), Set(63))))
+		val node2 = g.get(Label(IndexedSeq(Set(3,1), Set(5))))
+		val shortPath = node1.shortestPathTo(node2).get
+		val route = Routing.route(g,triangle)(node1,node2)
+		(shortPath.edges.size + 1) should be >= route.edges.size
+	}
+
 	it should "find an m+1 path on the face" in {
 		// Make the three times subdivision graph.
 		val graphs = SphereApproximation.repeatedSubdivision(triangle)
