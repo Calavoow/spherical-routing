@@ -59,6 +59,15 @@ class RoutingSpec extends FlatSpec with Matchers {
 		(shortPath.edges.size + 1) should be >= route.edges.size
 	}
 
+	it should "find an m+1 path on the face 4 for specific nodes 2" in {
+		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
+		val node1 = g.get(Label(IndexedSeq(Set(2,3), Set(4), Set(8), Set(29))))
+		val node2 = g.get(Label(IndexedSeq(Set(2,3), Set(16))))
+		val shortestPath = node1.shortestPathTo(node2).get
+		val route = Routing.route(g,triangle)(node1,node2)
+		assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+	}
+
 	it should "find an m+1 path on the face" in {
 		// Make the three times subdivision graph.
 		val graphs = SphereApproximation.repeatedSubdivision(triangle)
@@ -71,7 +80,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 	}
 
 	def atMostM1Path(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
-		g.nodes.toSeq.combinations(2).toIterable.par.foreach {
+		g.nodes.toSeq.combinations(2).toIterable.foreach {
 			case Seq(node1, node2) =>
 				val shortestPath = node1.shortestPathTo(node2).get
 				val route = Routing.route(g, g0)(node1, node2)
