@@ -51,7 +51,7 @@ object Routing {
 
 		val toParent = labelRoute(g)(child = from, parent = ancestorPath.nodes.head)
 		val fromParent = labelRoute(g)(child = to, parent = ancestorPath.nodes.last)
-		path.++=(toParent).++=(ancestorPath).++=(fromParent).result()
+		path.++=(toParent.nodes).++=(ancestorPath.nodes).++=(fromParent.nodes).result()
 	}
 
 	def closestAncestor(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT) : Option[g.NodeT] = {
@@ -62,13 +62,14 @@ object Routing {
 			// Find the first common ancestor.
 			_.nonEmpty
 		} map { ids ⇒
-			if(ids.size > 1) println(ids)
-			Random.shuffle(ids).head // Randomly decide between ancestors.
-//			ids.max
+//			if(ids.size > 1) println(ids)
+//			Random.shuffle(ids).head // Randomly decide between ancestors.
+			ids.max // Make choice deterministic for debugging.
 		}
 
+		// Convert the ID into a node.
 		closestAncestor.map { id : Int =>
-			g.nodes.find(_.id == id).get // This must exist.
+			g.nodes.find(_.id == id).get // The ancestor must exist.
 		}
 	}
 
@@ -86,16 +87,18 @@ object Routing {
 //				contains.map(_._2).getOrElse(-1) // Where -1 means that they did not have a something in common.
 //			}
 			val neighborIds = parent.neighbors.map(_.id)
-			val eligibleNeighbors = child.label.reverseMap {
+			val label = child.label
+			val intersectedNeighbors = child.label.reverseMap {
 				_.intersect(neighborIds)
-			} find {
+			}
+			val eligibleNeighbors = intersectedNeighbors find {
 				_.nonEmpty
 			} get // There must be an eligible neighbor.
 
 			val bestNeighbor = (parent.neighbors.find { neighbor ⇒
 				eligibleNeighbors.contains(neighbor.id)
 			}).get // Assume it exists.
-			recursiveLabelRoute(g)(child, bestNeighbor, bestNeighbor :: path)
+			recursiveLabelRoute(g)(child, bestNeighbor, parent :: path)
 		}
 	}
 }

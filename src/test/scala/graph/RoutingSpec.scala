@@ -7,6 +7,14 @@ import scalax.collection.immutable.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 class RoutingSpec extends FlatSpec with Matchers {
+	"Labelroute" should "route from a child to a parent" in {
+		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
+		val child = g.nodes.find(_.id == 65).get
+		val parent = g.nodes.find(_.id == 2).get
+		val path = Routing.labelRoute(g)(child = child, parent = parent)
+		assert(path.nodes.size == 4, s"Path was longer than expected.\n $path")
+	}
+
 	"Route" should "find a one-hop path" in {
 		val g = Graph[Node, UnDiEdge](
 			Label(Vector(Set(1))) ~ Label(Vector(Set(2))),
@@ -43,17 +51,17 @@ class RoutingSpec extends FlatSpec with Matchers {
 
 	it should "find an m+1 path on the face for specific nodes" in {
 		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
-		val node1 = g.get(Label(IndexedSeq(Set(2,3,1), Set(4,6), Set(9,4), Set(54))))
-		val node2 = g.get(Label(IndexedSeq(Set(3,1,2), Set(5,6), Set(12))))
+		val node1 = g.get(Label(IndexedSeq(Set(2,3,1), Set(4,5), Set(7,5), Set(65))))
+		val node2 = g.get(Label(IndexedSeq(Set(1,2), Set(6))))
 		val shortestPath = node1.shortestPathTo(node2).get
 		val route = Routing.route(g,triangle)(node1,node2)
-		assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+		assert(shortestPath.edges.size + 1 >= route.edges.size, s"ShortestPath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath}\n${route}")
 	}
 
 	it should "find an m+1 path on the face 4 for specific nodes" in {
 		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
-		val node1 = g.get(Label(IndexedSeq(Set(2,3,1), Set(4,6), Set(9,4), Set(63))))
-		val node2 = g.get(Label(IndexedSeq(Set(3,1), Set(5))))
+		val node1 = g.get(Label(IndexedSeq(Set(1, 2, 3), Set(4,5), Set(7,5), Set(65))))
+		val node2 = g.get(Label(IndexedSeq(Set(2, 3), Set(4))))
 		val shortPath = node1.shortestPathTo(node2).get
 		val route = Routing.route(g,triangle)(node1,node2)
 		(shortPath.edges.size + 1) should be >= route.edges.size
@@ -77,30 +85,6 @@ class RoutingSpec extends FlatSpec with Matchers {
 		}
 		println(paths.head._2.edges.size)
 	}
-
-	it should "find an m+1 path on the face 4 for specific nodes 2" in {
-		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
-		val parG = Iterator.iterate(triangle)(SphereApproximation.parSubdivide).drop(3).next()
-
-		g === parG
-
-		def routes(g : Graph[Node, UnDiEdge]) : (g.Path, g.Path) = {
-			val node1 = g.get(Label(IndexedSeq(Set(2,3), Set(4), Set(8), Set(29))))
-			val node2 = g.get(Label(IndexedSeq(Set(2,3), Set(16))))
-			val shortestPath = node1.shortestPathTo(node2).get
-			val route = Routing.route(g,triangle)(node1,node2)
-
-			(shortestPath, route)
-		}
-		val (gShort, gRoute) = routes(g)
-		val (parShort, parRoute) = routes(parG)
-		gShort === parShort
-		gRoute === parRoute
-
-		assert(parShort.edges.size + 1 >= parRoute.edges.size, s"Parallel Shortestpath + 1 was longer than route.")
-		assert(gShort.edges.size + 1 >= gRoute.edges.size, s"Shortestpath + 1 was longer than route.")
-	}
-
 
 	it should "find an m+1 path on the face" in {
 		// Make the three times subdivision graph.

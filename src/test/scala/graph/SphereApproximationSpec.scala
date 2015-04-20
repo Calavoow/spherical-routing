@@ -51,7 +51,7 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 	}
 
 	it should "always divide in the same way" in {
-		val graphs = for(_ <- (1 to 100)) yield {
+		val graphs = for(_ <- 1 to 100) yield {
 			SphereApproximation.repeatedSubdivision(icosahedron).drop(3).next()
 		}
 
