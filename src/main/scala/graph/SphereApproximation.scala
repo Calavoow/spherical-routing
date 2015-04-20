@@ -98,7 +98,7 @@ object SphereApproximation {
 		// Add a unique label to each edge.
 		(for ((edge, index) <- g.edges.zipWithIndex) yield {
 			val p1 :: p2 :: _ = edge.nodes.toList
-			val parentsLabel = p1.parentalLabel.zipAll(p2.parentalLabel, Set.empty[Int], Set.empty[Int]).map {
+			val parentsLabel = p1.parentalLabel.zipAll(p2.parentalLabel, Set(p1.id), Set(p2.id)).map {
 				case (s1, s2) ⇒ s1 union s2
 			}
 			edge → Label(parentsLabel :+ Set(currentMaxLabel + index + 1))
