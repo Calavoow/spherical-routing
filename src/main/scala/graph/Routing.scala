@@ -59,9 +59,12 @@ object Routing {
 		val closestAncestor = zippedLabels.reverseMap {
 			case (l1, l2) => l1 intersect l2
 		} find {
+			// Find the first common ancestor.
 			_.nonEmpty
 		} map { ids ⇒
+			if(ids.size > 1) println(ids)
 			Random.shuffle(ids).head // Randomly decide between ancestors.
+//			ids.max
 		}
 
 		closestAncestor.map { id : Int =>

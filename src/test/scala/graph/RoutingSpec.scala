@@ -59,14 +59,48 @@ class RoutingSpec extends FlatSpec with Matchers {
 		(shortPath.edges.size + 1) should be >= route.edges.size
 	}
 
+	it should "find the same path 100 times" in {
+		val paths = for(_ <- 1 to 100) yield {
+			val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
+
+			val node1 = g.get(Label(IndexedSeq(Set(2, 3), Set(4), Set(8), Set(29))))
+			val node2 = g.get(Label(IndexedSeq(Set(2, 3), Set(16))))
+			val shortestPath = node1.shortestPathTo(node2).get
+			val route = Routing.route(g, triangle)(node1, node2)
+			(shortestPath, route)
+		}
+
+		paths.sliding(2).foreach {
+			case Seq((shortestPath1, route1), (shortestPath2, route2)) =>
+				shortestPath1.edges.size should equal(shortestPath2.edges.size)
+				assert(route1.edges.size == route2.edges.size, s"Routes were not of equal length.\n $route1\n $route2.")
+		}
+		println(paths.head._2.edges.size)
+	}
+
 	it should "find an m+1 path on the face 4 for specific nodes 2" in {
 		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
-		val node1 = g.get(Label(IndexedSeq(Set(2,3), Set(4), Set(8), Set(29))))
-		val node2 = g.get(Label(IndexedSeq(Set(2,3), Set(16))))
-		val shortestPath = node1.shortestPathTo(node2).get
-		val route = Routing.route(g,triangle)(node1,node2)
-		assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+		val parG = Iterator.iterate(triangle)(SphereApproximation.parSubdivide).drop(3).next()
+
+		g === parG
+
+		def routes(g : Graph[Node, UnDiEdge]) : (g.Path, g.Path) = {
+			val node1 = g.get(Label(IndexedSeq(Set(2,3), Set(4), Set(8), Set(29))))
+			val node2 = g.get(Label(IndexedSeq(Set(2,3), Set(16))))
+			val shortestPath = node1.shortestPathTo(node2).get
+			val route = Routing.route(g,triangle)(node1,node2)
+
+			(shortestPath, route)
+		}
+		val (gShort, gRoute) = routes(g)
+		val (parShort, parRoute) = routes(parG)
+		gShort === parShort
+		gRoute === parRoute
+
+		assert(parShort.edges.size + 1 >= parRoute.edges.size, s"Parallel Shortestpath + 1 was longer than route.")
+		assert(gShort.edges.size + 1 >= gRoute.edges.size, s"Shortestpath + 1 was longer than route.")
 	}
+
 
 	it should "find an m+1 path on the face" in {
 		// Make the three times subdivision graph.

@@ -49,4 +49,14 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		g1.nodes.find(_.parentalLabel.head == Set(2,3)) should be('defined)
 		g1.nodes.find(_.parentalLabel.head == Set(1,3)) should be('defined)
 	}
+
+	it should "always divide in the same way" in {
+		val graphs = for(_ <- (1 to 100)) yield {
+			SphereApproximation.repeatedSubdivision(icosahedron).drop(3).next()
+		}
+
+		graphs.sliding(2).foreach {
+			case Seq(g1, g2) => g1 should equal(g2)
+		}
+	}
 }

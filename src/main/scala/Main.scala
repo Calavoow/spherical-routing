@@ -37,7 +37,7 @@ object Main {
 //		}
 //		writeToFile("occurences.csv", occurences.mkString("\n"))
 
-		val routeGraph = iterateSubdivs.drop(7).next()
+		val routeGraph = iterateSubdivs.drop(6).next()
 		val from = routeGraph.get(Label(1))
 		val to = routeGraph.get(Label(2))
 		val path = Routing.route(routeGraph, Units.icosahedron)(from, to)
