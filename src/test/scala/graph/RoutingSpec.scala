@@ -80,7 +80,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 	}
 
 	def atMostM1Path(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
-		g.nodes.toSeq.combinations(2).toIterable.par.foreach {
+		g.nodes.toSeq.combinations(2).foreach {
 			case Seq(node1, node2) =>
 				val shortestPath = node1.shortestPathTo(node2).get
 				val route = Routing.route(g, g0)(node1, node2)
