@@ -71,16 +71,16 @@ class RoutingSpec extends FlatSpec with Matchers {
 	it should "find an m+1 path on the face upto 5 dvisions" in {
 		// Make the three times subdivision graph.
 		val graphs = SphereApproximation.repeatedSubdivision(triangle)
-		graphs.take(4).foreach(g => atMostM1Path(g, triangle))
+		graphs.take(5).foreach(g => atMostM1Path(g, triangle))
 	}
 
 	it should "find an m+1 path upto 4 divisions" in {
 		val graphs = SphereApproximation.repeatedSubdivision(icosahedron)
-		graphs.take(3).foreach(g => atMostM1Path(g, icosahedron))
+		graphs.take(4).foreach(g => atMostM1Path(g, icosahedron))
 	}
 
 	def atMostM1Path(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
-		g.nodes.toSeq.combinations(2).foreach {
+		g.nodes.toSeq.combinations(2).toIterable.par.foreach {
 			case Seq(node1, node2) =>
 				val shortestPath = node1.shortestPathTo(node2).get
 				val route = Routing.route(g, g0)(node1, node2)
