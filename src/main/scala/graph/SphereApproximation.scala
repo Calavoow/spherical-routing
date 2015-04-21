@@ -20,16 +20,19 @@ object SphereApproximation {
 
 	def subdivide(g: Graph[Node, UnDiEdge]) : Graph[Node, UnDiEdge] = {
 		// Calculate the current max label ID, and iteration number.
-		val maxLabels = for(node ← g.nodes;
-		                    labelSet ← node.parentalLabel) yield {
-			labelSet.max
-		}
-		val currentMaxLabel = maxLabels.max
-		val iteration = g.nodes.map(_.parentalLabel.size).max - 1
-		// Calculate which labels the new nodes should get.
-		val newLabels = edgeLabels(g)(currentMaxLabel)
+		val currentMaxLabel = g.nodes.map(_.id).max
+		val iteration = g.nodes.map(_.label.size).max - 1
 
-		val newEdges = g.edges.par.flatMap { edge ⇒
+		// Find the edges that will be subdivided.
+		val subdivisionEdges = g.edges.filter { edge ⇒
+			edge.nodes.exists { node ⇒
+				node.layer == iteration
+			}
+		}
+		// Calculate which labels the new nodes should get.
+		val newLabels = edgeLabels(g)(subdivisionEdges, currentMaxLabel)
+
+		val newEdges = subdivisionEdges.par.flatMap { edge ⇒
 			val currentLabel = newLabels(edge)
 			// Collect the two triangles that have at least two nodes in common with the edge.
 			val relTri = relevantTriangles(g)(edge, iteration)
@@ -56,14 +59,11 @@ object SphereApproximation {
 		g.++(newEdges)
 	}
 
-	def edgeLabels(g: Graph[Node, UnDiEdge])(currentMaxLabel: Int): Map[g.EdgeT, Label] = {
+	def edgeLabels(g: Graph[Node, UnDiEdge])(edges: Iterable[g.EdgeT], currentMaxLabel: Int): Map[g.EdgeT, Label] = {
 		// Add a unique label to each edge.
-		(for ((edge, index) <- g.edges.zipWithIndex) yield {
+		(for ((edge, index) <- edges.zipWithIndex) yield {
 			val p1 :: p2 :: _ = edge.nodes.toList
-			val parentsLabel = p1.parentalLabel.zipAll(p2.parentalLabel, Set(p1.id), Set(p2.id)).map {
-				case (s1, s2) ⇒ s1 union s2
-			}
-			edge → Label(parentsLabel :+ Set(currentMaxLabel + index + 1))
+			edge → Label(p1, p2, currentMaxLabel + index + 1)
 		}).toMap
 	}
 

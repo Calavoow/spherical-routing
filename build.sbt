@@ -1,6 +1,6 @@
 name := "Spherical Routing"
 
-scalaVersion := "2.11.4"
+scalaVersion := "2.11.6"
 
 libraryDependencies ++= Seq(
 	"com.assembla.scala-incubator" %% "graph-core" % "1.9.1",

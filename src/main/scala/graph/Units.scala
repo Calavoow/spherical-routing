@@ -5,25 +5,52 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 object Units {
 	object Label {
 		def apply(i : Int) = new Label(Vector(Set(i)))
+
+		/**
+		 * Construct a label given two parents and an ID.
+		 *
+		 * The order of the parents is irrelevant.
+		 *
+		 * @param parent1 The first parent
+		 * @param parent2 The second parent
+		 * @param id The ID.
+		 * @return A new Label instance, with the label properly filtered.
+		 */
+		def apply(parent1: Label, parent2: Label, id: Int) = {
+			val recursiveLabel = if(parent1.layer == parent2.layer) {
+				parent1.label.zip(parent2.label).map {
+					case (l1,l2) ⇒ l1 union l2
+				}
+			} else {
+				// The smallest label is of the highest layer
+				val Seq(parentLower, parentHigher) = Seq(parent1, parent2).sortBy(_.layer)
+				// Extend the label to the same size of the higher layer label.
+				val extendedLabel = parentLower.label ++ Vector.fill(parentHigher.label.size - parentLower.label.size)(Set(parentLower.id))
+				val newLast = extendedLabel.last + parentHigher.id
+				extendedLabel.updated(extendedLabel.size - 1, newLast)
+			}
+
+			new Label(recursiveLabel :+ Set(id))
+		}
 	}
 
-	case class Label(parentalLabel: IndexedSeq[Set[Int]]) {
-		lazy val id = parentalLabel.last.head
-		lazy val label = {
-			parentalLabel.zipAll(parentalLabel.drop(1), Set.empty[Int], Set.empty[Int]).map {
-				case (label_k, label_k1) ⇒
-					val intersection = label_k intersect label_k1
-					if(intersection.nonEmpty) {
-						intersection
-					} else {
-						label_k
-					}
-			}
-		}
+	case class Label(label: IndexedSeq[Set[Int]]) {
+		lazy val id = label.last.head
+//		lazy val label = {
+//			parentalLabel.zipAll(parentalLabel.drop(1), Set.empty[Int], Set.empty[Int]).map {
+//				case (label_k, label_k1) ⇒
+//					val intersection = label_k intersect label_k1
+//					if(intersection.nonEmpty) {
+//						intersection
+//					} else {
+//						label_k
+//					}
+//			}
+//		}
 
-		def layer = parentalLabel.size - 1
+		def layer = label.size - 1
 		override def toString = {
-			"[" + parentalLabel.map(_.mkString("{",",","}")).mkString(",") + "]"
+			"[" + label.map(_.mkString("{",",","}")).mkString(",") + "]"
 		}
 	}
 

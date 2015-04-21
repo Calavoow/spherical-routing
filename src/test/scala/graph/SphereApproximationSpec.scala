@@ -45,9 +45,9 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		g1.nodes should contain( Label(1) )
 		g1.nodes should contain( Label(2) )
 		g1.nodes should contain( Label(3) )
-		g1.nodes.find(_.parentalLabel.head == Set(1,2)) should be('defined)
-		g1.nodes.find(_.parentalLabel.head == Set(2,3)) should be('defined)
-		g1.nodes.find(_.parentalLabel.head == Set(1,3)) should be('defined)
+		g1.nodes.find(_.label.head == Set(1,2)) should be('defined)
+		g1.nodes.find(_.label.head == Set(2,3)) should be('defined)
+		g1.nodes.find(_.label.head == Set(1,3)) should be('defined)
 	}
 
 	it should "always divide in the same way" in {
@@ -73,6 +73,14 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		g1.nodes should contain( Label( Vector(Set(1,2), Set(4))) )
 		g1.nodes.exists { node ⇒
 			node.layer == 3 && node.label(2).equals(Set(1, 4))
+		}
+	}
+
+	it should "have unique IDs" in {
+		val graphs = SphereApproximation.repeatedSubdivision(icosahedron)
+		graphs.take(4).foreach { g ⇒
+			val nodes = g.nodes.toVector.map(_.id)
+			assert(nodes.distinct.size == nodes.size)
 		}
 	}
 }

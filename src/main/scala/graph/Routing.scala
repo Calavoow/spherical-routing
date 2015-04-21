@@ -29,8 +29,8 @@ object Routing {
 		val ancestorPath : g.Path = commonAncestor match {
 			case None =>
 				// For efficiency, reduce the graph to only layer 0.
-				val paths = for(parent1 <- from.parentalLabel.head;
-					parent2 <- to.parentalLabel.head) yield {
+				val paths = for(parent1 <- from.label.head;
+					parent2 <- to.label.head) yield {
 					val p1 = g0 get Label(Vector(Set(parent1)))
 					val p2 = g0 get Label(Vector(Set(parent2)))
 					p1.shortestPathTo(p2).get // The graph is connected, so there is always a path.

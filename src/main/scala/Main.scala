@@ -10,11 +10,16 @@ import scalax.collection.io.dot._
 
 object Main {
 	def main(args: Array[String]) {
-		val g = Units.icosahedron
+		val g = Units.triangle
+		println(g)
 
+		var counter = 1
 		val iterateSubdivs = Iterator.iterate(g) { graph ⇒
 			println("Calculating subdivision")
-			SphereApproximation.subdivide(graph)
+			val subdiv = SphereApproximation.subdivide(graph)
+			writeToFile(s"subdiv_tri$counter", Dot.toDot(subdiv))
+			counter += 1
+			subdiv
 		}
 
 //		val occurences = iterateSubdivs.map { graph ⇒
@@ -37,11 +42,21 @@ object Main {
 //		}
 //		writeToFile("occurences.csv", occurences.mkString("\n"))
 
-		val routeGraph = iterateSubdivs.drop(6).next()
-		val from = routeGraph.get(Label(1))
-		val to = routeGraph.get(Label(2))
-		val path = Routing.route(routeGraph, Units.icosahedron)(from, to)
-		println(path)
+		val routeGraph = iterateSubdivs.drop(4).next()
+//		val from = routeGraph.get(Label(1))
+//		val to = routeGraph.get(Label(2))
+//		val path = Routing.route(routeGraph, Units.triangle)(from, to)
+//		println(path)
+		def getNode(id: Int) = {
+			routeGraph.nodes.find(_.id == id).get
+		}
+		println(getNode(57))
+		println(getNode(38))
+		println(getNode(34))
+		println(getNode(9))
+		println(getNode(10))
+		println(getNode(5))
+		println(getNode(4))
 
 //		val g = Units.icosahedron
 //		writeToFile("graph0.dot", Dot.toDot(g))
