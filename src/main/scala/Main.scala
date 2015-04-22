@@ -1,12 +1,6 @@
 import java.io.PrintWriter
 
 import graph._
-import graph.Units.{Label, Node}
-
-import scala.concurrent.Future
-import scalax.collection.immutable.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
-import scalax.collection.io.dot._
 
 object Main {
 	def main(args: Array[String]) {

@@ -2,14 +2,18 @@ package graph
 
 import graph.Units._
 
-import scalax.collection.immutable.Graph
-import scalax.collection.GraphEdge.UnDiEdge
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scala.language.higherKinds
+import scalax.collection.GraphEdge.UnDiEdge
+import scalax.collection.GraphPredef._
+import scalax.collection.immutable.Graph
 
 object Util {
 	implicit class RichGraph[N, E[X] <: EdgeLikeIn[X]](g: Graph[N,E]) {
-		def diameter = {
+		/**
+		 * Calculate the diameter of a graph.
+		 * @return The diameter of a graph.
+		 */
+		def diameter : Int = {
 			val nodes = g.nodes
 			(for (node ← nodes;
 			                  toNode ← nodes) yield {

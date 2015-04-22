@@ -2,22 +2,39 @@ package graph
 
 import graph.Units.{Label, Node}
 
-import scalax.collection.immutable.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import scala.language.postfixOps
+import scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
+import scalax.collection.immutable.Graph
 
 object SphereApproximation {
 
-	def approximateSphere(k: Int) = {
+	/**
+	 * Approximate the sphere a given number of subdivision iterations.
+	 * @param k The number of times to subdivide.
+	 * @return The subdivide graph.
+	 */
+	def approximateSphere(k: Int) : Graph[Node, UnDiEdge] = {
 		val ico = Units.icosahedron
+		repeatedSubdivision(ico).drop(k-1).next()
 	}
 
+	/**
+	 * An iterator through the subdivisions.
+	 * @param g The initial graph to start with.
+	 * @return The iterator.
+	 */
 	def repeatedSubdivision(g: Graph[Node, UnDiEdge]): Iterator[Graph[Node, UnDiEdge]] = {
 		Iterator.iterate(g) { graph =>
 			subdivide(graph)
 		}
 	}
 
+	/**
+	 * Subdivide the given graph once.
+	 * @param g
+	 * @return
+	 */
 	def subdivide(g: Graph[Node, UnDiEdge]) : Graph[Node, UnDiEdge] = {
 		// Calculate the current max label ID, and iteration number.
 		val currentMaxLabel = g.nodes.map(_.id).max
@@ -59,14 +76,31 @@ object SphereApproximation {
 		g.++(newEdges)
 	}
 
-	def edgeLabels(g: Graph[Node, UnDiEdge])(edges: Iterable[g.EdgeT], currentMaxLabel: Int): Map[g.EdgeT, Label] = {
+	/**
+	 * Calculate the labels on the given edges.
+	 * @param g
+	 * @param edges The edges for which to calculate a label.
+	 * @param currentMaxID The current maximum id.
+	 * @return A mapping from edge to label.
+	 */
+	def edgeLabels(g: Graph[Node, UnDiEdge])(edges: Iterable[g.EdgeT], currentMaxID: Int): Map[g.EdgeT, Label] = {
 		// Add a unique label to each edge.
 		(for ((edge, index) <- edges.zipWithIndex) yield {
 			val p1 :: p2 :: _ = edge.nodes.toList
-			edge → Label(p1, p2, currentMaxLabel + index + 1)
+			edge → Label(p1, p2, currentMaxID + index + 1)
 		}).toMap
 	}
 
+	/**
+	 * Given an edge calculate which nodes the child of this edge will be connected to.
+	 *
+	 * The generated node needs to be connected to other children which are on the triangle with the generate node.
+	 * Calculate the two triangles of these children.
+	 * @param g
+	 * @param e The which generates the node, for which to find triangles.
+	 * @param iteration The current iteration number (k). Used to find only triangle involving only edges in E_k.
+	 * @return
+	 */
 	def relevantTriangles(g: Graph[Node, UnDiEdge])(e: g.EdgeT, iteration: Int) : Set[Set[g.NodeT]] = {
 		val node1 :: node2 :: _ = e.nodes.toList
 		val sameNeighbors = node1.neighbors.filter { neighbor ⇒
@@ -78,7 +112,6 @@ object SphereApproximation {
 			neighborsBoth && correctLayer
 		}
 
-//		assert(sameNeighbors.size == 2, s"Same neighbors unexpected size ${sameNeighbors.size}: $sameNeighbors\n node1: ${node1.parentalLabel} / ${node1.neighbors}\n node2: ${node2.parentalLabel} / ${node2.neighbors}\n $e")
 		sameNeighbors.map { neighbor ⇒
 			Set(node1,node2,neighbor)
 		}

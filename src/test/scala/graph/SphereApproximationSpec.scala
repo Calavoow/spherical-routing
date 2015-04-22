@@ -1,14 +1,14 @@
 package graph
 
 import graph.Units._
-import org.scalatest.{Matchers, FlatSpec}
-import Util.triangles
+import graph.Util.triangles
+import org.scalatest.{FlatSpec, Matchers}
 
+import scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 class SphereApproximationSpec extends FlatSpec with Matchers {
-	import SphereApproximation._
 	"Triangles" should "be correctly found in a triangular graph" in {
 		val g = Units.triangle
 		triangles(g) should equal(Set(

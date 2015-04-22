@@ -5,7 +5,7 @@ import graph.Units._
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.UnDiEdge
 import scalax.collection.io.dot._
-import implicits._
+import scalax.collection.io.dot.implicits._
 
 object Dot {
 	def toDot(g: Graph[Node,UnDiEdge]) = {

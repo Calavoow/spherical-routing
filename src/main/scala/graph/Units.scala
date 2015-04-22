@@ -1,8 +1,8 @@
 package graph
 
-import scala.collection.mutable
+import scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 object Units {
 
@@ -28,47 +28,47 @@ object Units {
 				labelEntry.copy(distance = labelEntry.distance + 1)
 			})
 
+			// Filter out labels which are too far.
 			val filteredLabels = p1Label.zipAll(p2Label,
 				Set(LabelEntry(parent1.id, 1)),
 				Set(LabelEntry(parent2.id, 1))
 			) map {
 				case (l1, l2) ⇒
 					val u = l1 union l2
+					// Take the minimum distance for this label entry (index i)
 					val minDistance = u.map(_.distance).min
+					// Remove all label entries (at i) which have a larger distance.
 					u.filter(_.distance == minDistance)
 			}
 
-			//			val recursiveLabel = if(parent1.layer == parent2.layer) {
-			//				parent1.label.zip(parent2.label).map {
-			//					case (l1,l2) ⇒ l1 union l2
-			//				}
-			//			} else {
-			//				// The smallest label is of the highest layer
-			//				val Seq(parentLower, parentHigher) = Seq(parent1, parent2).sortBy(_.layer)
-			//				// Extend the label to the same size of the higher layer label.
-			//				val extendedLabel = parentLower.label ++ Vector.fill(parentHigher.label.size - parentLower.label.size)(Set(LabelEntry(parentLower.id,1)))
-			//				val newLast = extendedLabel.last + LabelEntry(parentHigher.id, 1)
-			//				extendedLabel.updated(extendedLabel.size - 1, newLast)
-			//			}
-
+			// Append own id at the end of the new label.
 			new Label(filteredLabels :+ Set(LabelEntry(id, 0)))
 		}
 	}
 
+	/**
+	 * The label of a node.
+	 *
+	 * Every node has a label, which consists of its parents, and the parents parent, etc.
+	 * This recursive label is filtered in such a way that at index k, you can find a set of ids of nodes
+	 * that can be routed towards if you are on layer k.
+	 * This is also used to easily find the closest common ancestor.
+	 * @param label The label of this node.
+	 */
 	case class Label(label: IndexedSeq[Set[LabelEntry]]) {
+		/**
+		 * The id of this node.
+		 *
+		 * Equivalent to the last element of the label.
+		 */
 		lazy val id = label.last.head.id
-		//		lazy val label = {
-		//			parentalLabel.zipAll(parentalLabel.drop(1), Set.empty[Int], Set.empty[Int]).map {
-		//				case (label_k, label_k1) ⇒
-		//					val intersection = label_k intersect label_k1
-		//					if(intersection.nonEmpty) {
-		//						intersection
-		//					} else {
-		//						label_k
-		//					}
-		//			}
-		//		}
 
+		/**
+		 * The layer of this node.
+		 *
+		 * Equivalent to the length of the label.
+		 * @return The layer, starting at 0.
+		 */
 		def layer = label.size - 1
 
 		override def toString = {
@@ -76,11 +76,20 @@ object Units {
 		}
 	}
 
+	/**
+	 * An entry in the set of label ids.
+	 *
+	 * @param id The id of the node.
+	 * @param distance The distance to this node, from the node that has the id in its label.
+	 */
 	case class LabelEntry(id: Int, distance: Int) {
 		override def toString = id.toString
 	}
 
 	type Node = Label
+	/**
+	 * The icosahedron manually encoded as a Graph object.
+	 */
 	val icosahedron = Graph[Node, UnDiEdge](
 		// Outer nodes
 		Label(0) ~ Label(1),
@@ -118,6 +127,9 @@ object Units {
 		Label(5) ~ Label(9)
 	)
 
+	/**
+	 * The triangle encoded as a graph object.
+	 */
 	val triangle = Graph[Node, UnDiEdge](
 		Label(1) ~ Label(2),
 		Label(2) ~ Label(3),

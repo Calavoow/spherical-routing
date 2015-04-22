@@ -1,10 +1,11 @@
 package graph
 
 import graph.Units._
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, Matchers}
 
+import scalax.collection.GraphEdge._
+import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
-import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 class RoutingSpec extends FlatSpec with Matchers {
 	"Labelroute" should "route from a child to a parent" in {
