@@ -56,7 +56,7 @@ object Routing {
 		val toParent = labelRoute(g)(child = from, parent = ancestorPath.nodes.head)
 		val fromParent = labelRoute(g)(child = to, parent = ancestorPath.nodes.last)
 		// Construct the complete path.
-		path.++=(toParent.nodes).++=(ancestorPath.nodes).++=(fromParent.nodes).result()
+		path.++=(toParent.nodes).++=(ancestorPath.nodes).++=(fromParent.nodes.toSeq.reverse).result()
 	}
 
 	/**
@@ -81,7 +81,8 @@ object Routing {
 			_.nonEmpty
 		} map { ids ⇒
 			// Randomly decide betwmap(_.id).max.
-			Random.shuffle(ids).head
+//			Random.shuffle(ids).head
+			ids.max
 		}
 
 		// Convert the ID into a node.
@@ -109,7 +110,10 @@ object Routing {
 		if( child == parent ) {
 			// The base case, where the child node has been reached.
 			val builder = g.newPathBuilder(child)
-			builder ++= path
+			for(node <- path) {
+				assert(builder.add(node))
+			}
+//			builder ++= path
 			builder.result()
 		} else {
 			// Looking from the parent, see which neighbour comes closer to the child node.
