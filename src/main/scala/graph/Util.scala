@@ -2,6 +2,7 @@ package graph
 
 import graph.Units._
 
+import scala.annotation.tailrec
 import scala.language.higherKinds
 import scalax.collection.GraphEdge.UnDiEdge
 import scalax.collection.GraphPredef._
@@ -58,5 +59,20 @@ object Util {
 			// This way triangles can easily be made distinct.
 			Set[g.NodeT](node,g.get(adjacentNode),g.get(triangleNode))
 		}
+	}
+
+	@tailrec
+	def factorial[T: Numeric](n: T, accum: T= 0): T = {
+		import Numeric.Implicits._
+		n match {
+			case 0 => accum
+			case _ => factorial(n - implicitly[Numeric[T]].fromInt(1), n * accum)
+		}
+	}
+	def binomCoef[T : Fractional](n: T, k: T) = {
+		import Fractional.Implicits._
+		Integral
+
+		factorial(n) / (factorial(k) * factorial(n-k))
 	}
 }

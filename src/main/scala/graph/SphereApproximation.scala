@@ -92,12 +92,12 @@ object SphereApproximation {
 	}
 
 	/**
-	 * Given an edge calculate which nodes the child of this edge will be connected to.
+	 * Given an edge, calculate which nodes the child of this edge will be connected to.
 	 *
 	 * The generated node needs to be connected to other children which are on the triangle with the generate node.
 	 * Calculate the two triangles of these children.
 	 * @param g
-	 * @param e The which generates the node, for which to find triangles.
+	 * @param e The edge which generates the node, for which to find triangles.
 	 * @param iteration The current iteration number (k). Used to find only triangle involving only edges in E_k.
 	 * @return
 	 */

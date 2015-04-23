@@ -7,7 +7,7 @@ import scalax.collection.immutable.Graph
 object Units {
 
 	object Label {
-		def apply(i: Int) = new Label(Vector(Set(LabelEntry(i, 0))))
+		def apply(i: Int) = new Label(Vector(Set(i)), 0)
 
 		/**
 		 * Construct a label given two parents and an ID.
@@ -20,29 +20,16 @@ object Units {
 		 * @return A new Label instance, with the label properly filtered.
 		 */
 		def apply(parent1: Label, parent2: Label, id: Int) = {
-			// Increment distances by one.
-			val p1Label = parent1.label.map(_.map { labelEntry ⇒
-				labelEntry.copy(distance = labelEntry.distance + 1)
-			})
-			val p2Label = parent2.label.map(_.map { labelEntry ⇒
-				labelEntry.copy(distance = labelEntry.distance + 1)
-			})
-
-			// Filter out labels which are too far.
-			val filteredLabels = p1Label.zipAll(p2Label,
-				Set(LabelEntry(parent1.id, 1)),
-				Set(LabelEntry(parent2.id, 1))
-			) map {
-				case (l1, l2) ⇒
-					val u = l1 union l2
-					// Take the minimum distance for this label entry (index i)
-					val minDistance = u.map(_.distance).min
-					// Remove all label entries (at i) which have a larger distance.
-					u.filter(_.distance == minDistance)
+			// Zip both labels, until one of the labels reaches the base graph.
+			val label = parent1.label.reverseIterator.zip(parent2.label.reverseIterator).zipWithIndex.toIndexedSeq.reverseMap {
+				case ((l1, l2), index) =>
+					val union = l1 union l2
+					// Remove parent ids that have already occurred in the label (at position 1)
+					// This will prevent a tree to be added twice.
+					if(index > 1) union - parent1.id - parent2.id
+					else union
 			}
-
-			// Append own id at the end of the new label.
-			new Label(filteredLabels :+ Set(LabelEntry(id, 0)))
+			new Label(label :+ Set(id), parent1.layer.max(parent2.layer) + 1)
 		}
 	}
 
@@ -55,35 +42,17 @@ object Units {
 	 * This is also used to easily find the closest common ancestor.
 	 * @param label The label of this node.
 	 */
-	case class Label(label: IndexedSeq[Set[LabelEntry]]) {
+	case class Label(label: IndexedSeq[Set[Int]], layer: Int) {
 		/**
 		 * The id of this node.
 		 *
 		 * Equivalent to the last element of the label.
 		 */
-		lazy val id = label.last.head.id
-
-		/**
-		 * The layer of this node.
-		 *
-		 * Equivalent to the length of the label.
-		 * @return The layer, starting at 0.
-		 */
-		def layer = label.size - 1
+		lazy val id = label.last.head
 
 		override def toString = {
-			"[" + label.map(_.mkString("{", ",", "}")).mkString(",") + "]"
+			"[" + label.map(_.mkString("{", ",", "}")).mkString(",") + "]_" + layer
 		}
-	}
-
-	/**
-	 * An entry in the set of label ids.
-	 *
-	 * @param id The id of the node.
-	 * @param distance The distance to this node, from the node that has the id in its label.
-	 */
-	case class LabelEntry(id: Int, distance: Int) {
-		override def toString = id.toString
 	}
 
 	type Node = Label

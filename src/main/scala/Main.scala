@@ -49,11 +49,11 @@ object Main {
 		def getNode(g: Graph[Units.Node, UnDiEdge], id: Int) : g.NodeT = {
 			g.nodes.find(_.id == id).get
 		}
-		val graph = iterateSubdivs.drop(4).next()
-		val node1 = getNode(graph, 34)
-		val node2 = getNode(graph, 30)
+		val graph = iterateSubdivs.drop(3).next()
+		println(graph.nodes)
+		val node1 = getNode(graph, 13)
+		val node2 = getNode(graph, 26)
 		println(node1)
-		println(getNode(graph, 15))
 		println(node2)
 		val path = Routing.route(graph, g)(node1, node2)
 		println(path.nodes)

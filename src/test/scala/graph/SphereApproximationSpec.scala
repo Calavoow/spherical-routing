@@ -41,9 +41,9 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		g1.nodes should contain( Label(1) )
 		g1.nodes should contain( Label(2) )
 		g1.nodes should contain( Label(3) )
-		g1.nodes.find(_.label.head == Set(LabelEntry(1,1),LabelEntry(2,1))) should be('defined)
-		g1.nodes.find(_.label.head == Set(LabelEntry(2,1),LabelEntry(3,1))) should be('defined)
-		g1.nodes.find(_.label.head == Set(LabelEntry(1,1),LabelEntry(3,1))) should be('defined)
+		g1.nodes.find(_.label.head == Set(1,2)) should be('defined)
+		g1.nodes.find(_.label.head == Set(2,3)) should be('defined)
+		g1.nodes.find(_.label.head == Set(1,3)) should be('defined)
 	}
 
 	it should "always divide in the same way" in {
@@ -58,18 +58,19 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 
 	it should "subdivide a triangle of different layers" in {
 		val g = Graph[Node, UnDiEdge](
-			Label(1) ~ Label(Vector(Set(LabelEntry(1,1),LabelEntry(2,1)), Set(LabelEntry(4,0)))),
-			Label(1) ~ Label(Vector(Set(LabelEntry(1,1),LabelEntry(3,1)), Set(LabelEntry(5,0)))),
-			Label(Vector(Set(LabelEntry(1,1),LabelEntry(3,1)), Set(LabelEntry(5,0)))) ~ Label(Vector(Set(LabelEntry(1,1),LabelEntry(2,1)), Set(LabelEntry(4,0))))
+			Label(1) ~ Label(Vector(Set(1,2), Set(4)),1),
+			Label(1) ~ Label(Vector(Set(1,3), Set(5)),1),
+			Label(Vector(Set(1,3), Set(5)), 1) ~ Label(Vector(Set(1,2), Set(4)), 1)
 		)
 		val g1 = SphereApproximation.subdivide(g)
 		g1.nodes.size should equal(6)
 		g1.edges.size should equal(12)
 		g1.nodes should contain( Label(1) )
-		g1.nodes should contain( Label( Vector(Set(LabelEntry(1,1), LabelEntry(2,1)), Set(LabelEntry(4,0)))) )
+		g1.nodes should contain( Label( Vector(Set(1, 2), Set(4)), 1) )
+		println(g1)
 		// There must be a node between 1 and 4.
 		assert(g1.nodes.exists { node ⇒
-			node.layer == 2 && node.label(1).equals(Set(LabelEntry(1,1), LabelEntry(4,1)))
+			node.layer == 2 && node.label.head.equals(Set(1, 4))
 		})
 	}
 

@@ -1,6 +1,6 @@
 package graph
 
-import graph.Units.{LabelEntry, Node}
+import graph.Units.Node
 
 import scala.annotation.tailrec
 import scala.language.postfixOps
@@ -31,11 +31,11 @@ object Routing {
 			case None =>
 				// No common ancestor.
 				// For efficiency, use the graph of only layer 0.
-				val paths = for (parent1 <- from.label.head;
-				                 parent2 <- to.label.head)
+				val paths = for (parentID1 <- from.label.head if g0.nodes.exists(_.id == parentID1);
+				                 parentID2 <- to.label.head if g0.nodes.exists(_.id == parentID2))
 					yield {
-						val p1 = g0.nodes.find(_.id == parent1.id).get
-						val p2 = g0.nodes.find(_.id == parent2.id).get
+						val p1 = g0.nodes.find(_.id == parentID1).get
+						val p2 = g0.nodes.find(_.id == parentID2).get
 						p1.shortestPathTo(p2).get // The graph is connected, so there is always a path.
 					}
 				val lowestPath = paths.minBy(_.size)
@@ -71,26 +71,36 @@ object Routing {
 	 *         Then routing must occur on the lowest layer.
 	 */
 	def closestAncestor(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): Option[g.NodeT] = {
-		// Combine the labels, and extend with empty sets if one node is of a different layer.
-		val zippedLabels = node1.label.zipAll(node2.label, Set.empty[LabelEntry], Set.empty[LabelEntry])
-		val closestAncestor = zippedLabels.reverseMap {
-			// Intersect each label_k with the other, to see if any ID occurs in both.
-			case (l1, l2) => l1.map(_.id) intersect l2.map(_.id)
-		} find {
-			// Find the first common ancestor.
-			_.nonEmpty
-		} map { ids ⇒
-			// Randomly decide betwmap(_.id).max.
-//			Random.shuffle(ids).head
-			ids.max
-		}
+		val firstNonEmptyIntersection = node1.label.view.reverseMap { entries1 =>
+			node2.label.view.reverseMap(_ intersect entries1).find(_.nonEmpty)
+		} find (_.isDefined) flatten
 
-		// Convert the ID into a node.
-		closestAncestor.map { id: Int =>
-			// The ancestor must exist.
+		firstNonEmptyIntersection.map { intersection =>
+			val id = intersection.max // max for debugging
+			// The ancestor must exist
 			g.nodes.find(_.id == id).get
 		}
 	}
+		// Combine the labels, and extend with empty sets if one node is of a different layer.
+//		val zippedLabels = node1.label.zipAll(node2.label, Set.empty[LabelEntry], Set.empty[LabelEntry])
+//		val closestAncestor = zippedLabels.reverseMap {
+//			// Intersect each label_k with the other, to see if any ID occurs in both.
+//			case (l1, l2) => l1.map(_.id) intersect l2.map(_.id)
+//		} find {
+//			// Find the first common ancestor.
+//			_.nonEmpty
+//		} map { ids ⇒
+//			// Randomly decide betwmap(_.id).max.
+////			Random.shuffle(ids).head
+//			ids.max
+//		}
+//
+//		// Convert the ID into a node.
+//		closestAncestor.map { id: Int =>
+//			// The ancestor must exist.
+//			g.nodes.find(_.id == id).get
+//		}
+//	}
 
 	/**
 	 * Use the label to route from a parent node to a child node.
@@ -122,14 +132,13 @@ object Routing {
 			val eligibleNeighbors = child.label.reverse.find { labelEntries ⇒
 				// Get the closest set of eligible neighbors.
 				// Eligible here means that it occurs in the label of the child node.
-				(labelEntries.map(_.id) intersect neighborIds).nonEmpty
+				(labelEntries intersect neighborIds).nonEmpty
 			} get // There must be an eligible neighbor.
 
 
 			// Now convert that set of neighbours into a node.
-			val eligibleIds = eligibleNeighbors.map(_.id)
 			val bestNeighbor = parent.neighbors.find { neighbor ⇒
-				eligibleIds.contains(neighbor.id)
+				eligibleNeighbors.contains(neighbor.id)
 			} get // Assume it exists.
 
 			// Prepend the parent to the path. The new parent is the best neighbour.

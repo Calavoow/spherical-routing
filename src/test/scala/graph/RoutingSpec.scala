@@ -14,7 +14,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val child = g.nodes.find(_.id == 20).get
 		val parent = g.nodes.find(_.id == 2).get
 		val path = Routing.labelRoute(g)(child = child, parent = parent)
-		assert(path.nodes.size == 4, s"Path was different than expected.\n $path")
+		assert(path.nodes.size == 3, s"Path was different than expected.\n $path")
 	}
 
 	"Route" should "find a one-hop path" in {
@@ -77,7 +77,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 
 	it should "find an m+1 path upto 4 divisions" in {
 		val graphs = SphereApproximation.repeatedSubdivision(icosahedron)
-		graphs.take(3).foreach(g => atMostM1Path(g, icosahedron))
+		graphs.take(4).foreach(g => atMostM1Path(g, icosahedron))
 	}
 
 	it should "find an m+1 path on the face upto 8 division with random sampling" in {
@@ -94,6 +94,8 @@ class RoutingSpec extends FlatSpec with Matchers {
 	}
 
 	def atMostM1Path(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
+		val combinations = Util.binomCoef[Long](g.nodes.size, 2)
+		var counter = 0L
 		g.nodes.toSeq.combinations(2).foreach {
 			case Seq(node1, node2) =>
 				val shortestPath = node1.shortestPathTo(node2).get
@@ -101,6 +103,8 @@ class RoutingSpec extends FlatSpec with Matchers {
 				assert(route.nodes.head == node1)
 				assert(route.nodes.last == node2)
 				assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+				if((counter % 100000L) == 0) println(s"$counter / $combinations")
+				counter += 1
 		}
 	}
 }
