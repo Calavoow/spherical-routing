@@ -81,26 +81,6 @@ object Routing {
 			g.nodes.find(_.id == id).get
 		}
 	}
-		// Combine the labels, and extend with empty sets if one node is of a different layer.
-//		val zippedLabels = node1.label.zipAll(node2.label, Set.empty[LabelEntry], Set.empty[LabelEntry])
-//		val closestAncestor = zippedLabels.reverseMap {
-//			// Intersect each label_k with the other, to see if any ID occurs in both.
-//			case (l1, l2) => l1.map(_.id) intersect l2.map(_.id)
-//		} find {
-//			// Find the first common ancestor.
-//			_.nonEmpty
-//		} map { ids ⇒
-//			// Randomly decide betwmap(_.id).max.
-////			Random.shuffle(ids).head
-//			ids.max
-//		}
-//
-//		// Convert the ID into a node.
-//		closestAncestor.map { id: Int =>
-//			// The ancestor must exist.
-//			g.nodes.find(_.id == id).get
-//		}
-//	}
 
 	/**
 	 * Use the label to route from a parent node to a child node.

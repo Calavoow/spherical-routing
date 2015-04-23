@@ -61,18 +61,17 @@ object Util {
 		}
 	}
 
+	def factorial[T: Numeric](n: T) = recursiveFactorial(n, implicitly[Numeric[T]].fromInt(1))
 	@tailrec
-	def factorial[T: Numeric](n: T, accum: T= 0): T = {
+	private def recursiveFactorial[T: Numeric](n: T, accum: T): T = {
 		import Numeric.Implicits._
 		n match {
 			case 0 => accum
-			case _ => factorial(n - implicitly[Numeric[T]].fromInt(1), n * accum)
+			case _ => recursiveFactorial(n - implicitly[Numeric[T]].fromInt(1), n * accum)
 		}
 	}
-	def binomCoef[T : Fractional](n: T, k: T) = {
-		import Fractional.Implicits._
-		Integral
-
+	def binomCoef[T: Integral](n: T, k: T): T = {
+		import Integral.Implicits._
 		factorial(n) / (factorial(k) * factorial(n-k))
 	}
 }

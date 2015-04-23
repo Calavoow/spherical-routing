@@ -11,7 +11,7 @@ import scalax.collection.immutable.Graph
 class RoutingSpec extends FlatSpec with Matchers {
 	"Labelroute" should "route from a child to a parent" in {
 		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
-		val child = g.nodes.find(_.id == 20).get
+		val child = g.nodes.find(_.id == 18).get
 		val parent = g.nodes.find(_.id == 2).get
 		val path = Routing.labelRoute(g)(child = child, parent = parent)
 		assert(path.nodes.size == 3, s"Path was different than expected.\n $path")
@@ -94,7 +94,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 	}
 
 	def atMostM1Path(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
-		val combinations = Util.binomCoef[Long](g.nodes.size, 2)
+		val combinations = Util.binomCoef(BigInt(g.nodes.size), BigInt(2))
 		var counter = 0L
 		g.nodes.toSeq.combinations(2).foreach {
 			case Seq(node1, node2) =>
@@ -103,7 +103,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 				assert(route.nodes.head == node1)
 				assert(route.nodes.last == node2)
 				assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
-				if((counter % 100000L) == 0) println(s"$counter / $combinations")
+				if((counter % 10000L) == 0) println(s"$counter / $combinations")
 				counter += 1
 		}
 	}

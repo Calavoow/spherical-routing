@@ -8,6 +8,7 @@ import scalax.collection.immutable.Graph
 
 object Main {
 	def main(args: Array[String]) {
+		println(Util.binomCoef(5,3))
 		val g = Units.triangle
 
 		var counter = 1
