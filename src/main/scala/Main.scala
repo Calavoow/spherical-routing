@@ -1,6 +1,7 @@
 import java.io.PrintWriter
 
 import graph._
+import graph.Units._
 import instrumentation.Metric
 
 import scalax.collection.GraphEdge._
@@ -14,7 +15,7 @@ object Main {
 //		var counter = 1
 		def iterateSubdivs = {
 			Iterator.iterate(g) { graph ⇒
-				println("Calculating subdivision")
+//				println("Calculating subdivision")
 				SphereApproximation.subdivide(graph)
 				//			writeToFile(s"subdiv_tri$counter", Dot.toDot(subdiv))
 				//			counter += 1
@@ -22,12 +23,19 @@ object Main {
 			}
 		}
 
-
-
-		def getNode(g: Graph[Units.Node, UnDiEdge], id: Int) : g.NodeT = {
-			g.nodes.find(_.id == id).get
+		val collisions = iterateSubdivs.map { graph ⇒
+			Metric.randomCollisionCount(graph, g, 10000)
+		} take(8) foreach { collisions ⇒
+			print("," + collisions)
 		}
+		List(1,2,3).mkString(",")
+	}
 
+	def getNode(g: Graph[Units.Node, UnDiEdge], id: Int) : g.NodeT = {
+		g.nodes.find(_.id == id).get
+	}
+
+	def instrumentPathCount(g: Graph[Node ,UnDiEdge], iterateSubdivs: Iterator[Graph[Node, UnDiEdge]]) = {
 		val pathsPerLayerRouting = iterateSubdivs.map { graph ⇒
 			Metric.countRoutingPaths(graph, g)
 		}
@@ -41,7 +49,7 @@ object Main {
 		}
 
 		writeToFile("pathCountRouting_ico.csv", mapsToString(pathsPerLayerRouting, 5))
-//		writeToFile("pathCountingShortest.csv", mapsToString(pathsPerLayerShortest, 4))
+		writeToFile("pathCountingShortest.csv", mapsToString(pathsPerLayerShortest, 4))
 	}
 
 	def writeToFile(fileName: String, content: String) {
