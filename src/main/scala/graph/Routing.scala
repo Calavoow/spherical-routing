@@ -53,10 +53,10 @@ object Routing {
 		}
 
 		// Find the path to and from the parent.
-		val toParent = labelRoute(g)(child = from, parent = ancestorPath.nodes.head)
-		val fromParent = labelRoute(g)(child = to, parent = ancestorPath.nodes.last)
+		val fromToParent = labelRoute(g)(child = from, parent = ancestorPath.nodes.head)
+		val toToParent = labelRoute(g)(child = to, parent = ancestorPath.nodes.last)
 		// Construct the complete path.
-		path.++=(toParent.nodes).++=(ancestorPath.nodes).++=(fromParent.nodes.toSeq.reverse).result()
+		path.++=(fromToParent.nodes).++=(ancestorPath.nodes).++=(toToParent.nodes.toSeq.reverse).result()
 	}
 
 	/**
@@ -76,7 +76,8 @@ object Routing {
 		} find (_.isDefined) flatten
 
 		firstNonEmptyIntersection.map { intersection =>
-			val id = intersection.max // max for debugging
+			// Pick a random ancestor, if there are two equidistant.
+			val id = Random.shuffle(intersection.toSeq).head
 			// The ancestor must exist
 			g.nodes.find(_.id == id).get
 		}
@@ -100,18 +101,15 @@ object Routing {
 		if( child == parent ) {
 			// The base case, where the child node has been reached.
 			val builder = g.newPathBuilder(child)
-			for(node <- path) {
-				assert(builder.add(node))
-			}
-//			builder ++= path
+			builder ++= path
 			builder.result()
 		} else {
 			// Looking from the parent, see which neighbour comes closer to the child node.
 			// Use the id, because the label entry may differ.
 			val neighborIds = parent.neighbors.map(_.id)
+			// Get the closest set of eligible neighbors.
+			// Eligible here means that it occurs in the label of the child node.
 			val eligibleNeighbors = child.label.reverse.find { labelEntries ⇒
-				// Get the closest set of eligible neighbors.
-				// Eligible here means that it occurs in the label of the child node.
 				(labelEntries intersect neighborIds).nonEmpty
 			} get // There must be an eligible neighbor.
 
@@ -119,7 +117,7 @@ object Routing {
 			// Now convert that set of neighbours into a node.
 			val bestNeighbor = parent.neighbors.find { neighbor ⇒
 				eligibleNeighbors.contains(neighbor.id)
-			} get // Assume it exists.
+			} get // It must exist, if there is an eligible neighbour.
 
 			// Prepend the parent to the path. The new parent is the best neighbour.
 			recursiveLabelRoute(g)(child, bestNeighbor, parent :: path)
