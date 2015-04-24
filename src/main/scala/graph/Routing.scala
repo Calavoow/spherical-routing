@@ -31,11 +31,14 @@ object Routing {
 			case None =>
 				// No common ancestor.
 				// For efficiency, use the graph of only layer 0.
-				val paths = for (parentID1 <- from.label.head if g0.nodes.exists(_.id == parentID1);
-				                 parentID2 <- to.label.head if g0.nodes.exists(_.id == parentID2))
+				// Make a local copy, because of a racing condition in shortestPathTo.
+				val g0_2 = Graph.apply[Node,UnDiEdge](g0.edges.toSeq:_*)
+				val paths = for (parentID1 <- from.label.head if g0_2.nodes.exists(_.id == parentID1);
+				                 parentID2 <- to.label.head if g0_2.nodes.exists(_.id == parentID2))
 					yield {
-						val p1 = g0.nodes.find(_.id == parentID1).get
-						val p2 = g0.nodes.find(_.id == parentID2).get
+						val p1 = g0_2.nodes.find(_.id == parentID1).get
+						val p2 = g0_2.nodes.find(_.id == parentID2).get
+						// shortestPathTo has a racing condition.
 						p1.shortestPathTo(p2).get // The graph is connected, so there is always a path.
 					}
 				val lowestPath = paths.minBy(_.size)

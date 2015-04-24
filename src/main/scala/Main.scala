@@ -1,6 +1,8 @@
 import java.io.PrintWriter
 
 import graph._
+import graph.Units._
+import instrumentation.Metric
 
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
@@ -8,56 +10,46 @@ import scalax.collection.immutable.Graph
 
 object Main {
 	def main(args: Array[String]) {
-		println(Util.binomCoef(5,3))
-		val g = Units.triangle
+		val g = Units.icosahedron
 
-		var counter = 1
-		val iterateSubdivs = Iterator.iterate(g) { graph ⇒
-			println("Calculating subdivision")
-			val subdiv = SphereApproximation.subdivide(graph)
-			writeToFile(s"subdiv_tri$counter", Dot.toDot(subdiv))
-			counter += 1
-			subdiv
+//		var counter = 1
+		def iterateSubdivs = {
+			Iterator.iterate(g) { graph ⇒
+//				println("Calculating subdivision")
+				SphereApproximation.subdivide(graph)
+				//			writeToFile(s"subdiv_tri$counter", Dot.toDot(subdiv))
+				//			counter += 1
+				//			subdiv
+			}
 		}
 
-//		val occurences = iterateSubdivs.map { graph ⇒
-//			val paths = graph.nodes.toSeq.combinations(2).map {
-//				case Seq(node1, node2) =>
-////					Routing.route(graph, Units.icosahedron)(node1, node2)
-//					node1.shortestPathTo(node2).get
-//			}
-//			val pathsThroughLayer = paths.map { path ⇒
-//				val layers = path.nodes.toIterator.sliding(2).map {
-//					case Seq(node1, node2) =>
-//						Math.max(node1.layer, node2.layer)
-//				}
-//				layers.toSeq.groupBy(identity).mapValues(_.size)
-//			}
-//			val nrPathsPerLayer = pathsThroughLayer.reduceLeft { (accum, nrPathsPerLayer) ⇒
-//				accum ++ nrPathsPerLayer.map {
-//					case (k,v) ⇒ k → (v + accum.getOrElse(k,0))
-//				}
-//			}
-//			nrPathsPerLayer.toSeq.sortBy {
-//				case (layer, _) ⇒ layer
-//			}.map {
-//				case (layer, occurrences) ⇒ s"$occurrences"
-//			}.mkString(",")
-//		}
-//		writeToFile("occurences_shortest.csv", occurences.take(4).mkString("\n"))
-
-
-		def getNode(g: Graph[Units.Node, UnDiEdge], id: Int) : g.NodeT = {
-			g.nodes.find(_.id == id).get
+		val collisions = iterateSubdivs.map { graph ⇒
+			Metric.randomCollisionCount(graph, g, 10000)
+		} take(8) foreach { collisions ⇒
+			print("," + collisions)
 		}
-		val graph = iterateSubdivs.drop(3).next()
-		println(graph.nodes)
-		val node1 = getNode(graph, 13)
-		val node2 = getNode(graph, 26)
-		println(node1)
-		println(node2)
-		val path = Routing.route(graph, g)(node1, node2)
-		println(path.nodes)
+		List(1,2,3).mkString(",")
+	}
+
+	def getNode(g: Graph[Units.Node, UnDiEdge], id: Int) : g.NodeT = {
+		g.nodes.find(_.id == id).get
+	}
+
+	def instrumentPathCount(g: Graph[Node ,UnDiEdge], iterateSubdivs: Iterator[Graph[Node, UnDiEdge]]) = {
+		val pathsPerLayerRouting = iterateSubdivs.map { graph ⇒
+			Metric.countRoutingPaths(graph, g)
+		}
+		val pathsPerLayerShortest = iterateSubdivs.map { graph ⇒
+			Metric.countShortestPaths(graph)
+		}
+
+		def mapsToString[K : Ordering,V](it: Iterator[Map[K,V]], takeCount: Int): String = {
+			val csvPathCount = it.map(_.toSeq.sortBy(_._1).map(_._2).mkString(","))
+			csvPathCount.take(takeCount).mkString("\n")
+		}
+
+		writeToFile("pathCountRouting_ico.csv", mapsToString(pathsPerLayerRouting, 5))
+		writeToFile("pathCountingShortest.csv", mapsToString(pathsPerLayerShortest, 4))
 	}
 
 	def writeToFile(fileName: String, content: String) {
