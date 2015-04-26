@@ -33,8 +33,8 @@ object Routing {
 				// For efficiency, use the graph of only layer 0.
 				// Make a local copy, because of a racing condition in shortestPathTo.
 				val g0_2 = Graph.apply[Node,UnDiEdge](g0.edges.toSeq:_*)
-				val paths = for (parentID1 <- from.label.head if g0_2.nodes.exists(_.id == parentID1);
-				                 parentID2 <- to.label.head if g0_2.nodes.exists(_.id == parentID2))
+				val paths = for (parentID1 <- from.label.last if g0_2.nodes.exists(_.id == parentID1);
+				                 parentID2 <- to.label.last if g0_2.nodes.exists(_.id == parentID2))
 					yield {
 						val p1 = g0_2.nodes.find(_.id == parentID1).get
 						val p2 = g0_2.nodes.find(_.id == parentID2).get
@@ -74,8 +74,8 @@ object Routing {
 	 *         Then routing must occur on the lowest layer.
 	 */
 	def closestAncestor(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): Option[g.NodeT] = {
-		val firstNonEmptyIntersection = node1.label.view.reverseMap { entries1 =>
-			node2.label.view.reverseMap(_ intersect entries1).find(_.nonEmpty)
+		val firstNonEmptyIntersection = node1.label.view.map { entries1 =>
+			node2.label.view.map(_ intersect entries1).find(_.nonEmpty)
 		} find (_.isDefined) flatten
 
 		firstNonEmptyIntersection.map { intersection =>
@@ -112,7 +112,7 @@ object Routing {
 			val neighborIds = parent.neighbors.map(_.id)
 			// Get the closest set of eligible neighbors.
 			// Eligible here means that it occurs in the label of the child node.
-			val eligibleNeighbors = child.label.reverse.find { labelEntries ⇒
+			val eligibleNeighbors = child.label.find { labelEntries ⇒
 				(labelEntries intersect neighborIds).nonEmpty
 			} get // There must be an eligible neighbor.
 

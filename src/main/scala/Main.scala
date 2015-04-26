@@ -10,7 +10,7 @@ import scalax.collection.immutable.Graph
 
 object Main {
 	def main(args: Array[String]) {
-		val g = Units.icosahedron
+		val g = Units.triangle
 
 //		var counter = 1
 		def iterateSubdivs = {
@@ -23,12 +23,21 @@ object Main {
 			}
 		}
 
-		val collisions = iterateSubdivs.map { graph ⇒
-			Metric.randomCollisionCount(graph, g, 10000)
-		} take(8) foreach { collisions ⇒
-			print("," + collisions)
-		}
-		List(1,2,3).mkString(",")
+//		val collisions = iterateSubdivs.map { graph ⇒
+//			Metric.randomCollisionCount(graph, g, 10000)
+//		} take(8) foreach { collisions ⇒
+//			print("," + collisions)
+//		}
+
+		val graph = iterateSubdivs.drop(4).next()
+		println(getNode(graph, 61))
+		println(getNode(graph, 41))
+		println(getNode(graph, 40))
+		println(getNode(graph, 14))
+		println(getNode(graph, 13))
+		println(getNode(graph, 4))
+		println(getNode(graph, 6))
+		println(getNode(graph, 5))
 	}
 
 	def getNode(g: Graph[Units.Node, UnDiEdge], id: Int) : g.NodeT = {

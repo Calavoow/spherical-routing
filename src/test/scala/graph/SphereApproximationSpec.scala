@@ -41,9 +41,9 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		g1.nodes should contain( Label(1) )
 		g1.nodes should contain( Label(2) )
 		g1.nodes should contain( Label(3) )
-		g1.nodes.find(_.label.head == Set(1,2)) should be('defined)
-		g1.nodes.find(_.label.head == Set(2,3)) should be('defined)
-		g1.nodes.find(_.label.head == Set(1,3)) should be('defined)
+		g1.nodes.find(_.label.last == Set(1,2)) should be('defined)
+		g1.nodes.find(_.label.last == Set(2,3)) should be('defined)
+		g1.nodes.find(_.label.last == Set(1,3)) should be('defined)
 	}
 
 	it should "always divide in the same way" in {
@@ -70,7 +70,7 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		println(g1)
 		// There must be a node between 1 and 4.
 		assert(g1.nodes.exists { node ⇒
-			node.layer == 2 && node.label.head.equals(Set(1, 4))
+			node.layer == 2 && node.label.last.equals(Set(1, 4))
 		})
 	}
 
@@ -79,6 +79,28 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		graphs.take(4).foreach { g ⇒
 			val nodes = g.nodes.toVector.map(_.id)
 			assert(nodes.distinct.size == nodes.size)
+		}
+	}
+
+	"The labelling" should "have a maximum size of k+1 on the triangle" in {
+		val gs = SphereApproximation.repeatedSubdivision(Units.triangle)
+		gs.take(8).foreach { graph ⇒
+			graph.nodes.par.foreach{ node ⇒
+				node.label.zipWithIndex.foreach{ case (set, index) ⇒
+					assert(set.size <= index + 1, s"Node had label larger than ${index + 1}: $node")
+				}
+			}
+		}
+	}
+
+	it should "have a maximum size of k+1 on the icosahedron" in {
+		val gs = SphereApproximation.repeatedSubdivision(Units.icosahedron)
+		gs.take(6).foreach { graph ⇒
+			graph.nodes.par.foreach{ node ⇒
+				node.label.zipWithIndex.foreach{ case (set, index) ⇒
+					assert(set.size <= index + 1, s"Node had label larger than ${index + 1}: $node")
+				}
+			}
 		}
 	}
 }

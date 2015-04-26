@@ -21,15 +21,20 @@ object Units {
 		 */
 		def apply(parent1: Label, parent2: Label, id: Int) = {
 			// Zip both labels, until one of the labels reaches the base graph.
-			val label = parent1.label.reverseIterator.zip(parent2.label.reverseIterator).zipWithIndex.toIndexedSeq.reverseMap {
-				case ((l1, l2), index) =>
-					val union = l1 union l2
+			val unfilteredLabel = parent1.label.zip(parent2.label).toIndexedSeq.map {
+				case (l1, l2) =>
+					l1 union l2
 					// Remove parent ids that have already occurred in the label (at position 1)
 					// This will prevent a tree to be added twice.
-					if(index > 1) union - parent1.id - parent2.id
-					else union
+//					if(index > 0) union -- Set(parent1.id, parent2.id)
+//					else union
 			}
-			new Label(label :+ Set(id), parent1.layer.max(parent2.layer) + 1)
+			// Calculate all previous elements that have occurred at each index.
+			val prefixUnion = unfilteredLabel.scanLeft(Set[Int]())(_ union _)
+			val filteredLabel = unfilteredLabel.zip(prefixUnion).map {
+				case (unfilteredEl, prefixSet) ⇒ unfilteredEl -- prefixSet
+			}
+			new Label(Set(id) +: filteredLabel, parent1.layer.max(parent2.layer) + 1)
 		}
 	}
 
@@ -48,7 +53,7 @@ object Units {
 		 *
 		 * Equivalent to the last element of the label.
 		 */
-		lazy val id = label.last.head
+		lazy val id = label.head.head
 
 		override def toString = {
 			"[" + label.map(_.mkString("{", ",", "}")).mkString(",") + "]_" + layer
