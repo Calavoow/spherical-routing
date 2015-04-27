@@ -1,17 +1,13 @@
 package instrumentation
 
 import graph.Routing
-
 import graph.Units._
+
 import scala.collection.mutable
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.forkjoin.ThreadLocalRandom
 import scala.util.Random
 import scalax.collection.GraphEdge._
-import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
-import scala.collection.mutable
 
 object Metric {
 	trait Router {
@@ -69,13 +65,12 @@ object Metric {
 		} reduce(sumMapByKey)
 	}
 
-
-	def randomCollisionCount(g: Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge], samples: Int) : Int = {
+	def randomCollisionCount(g: Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge], concurrentPaths: Int, samples: Int) : Int = {
 		val nodes = g.nodes.toVector
-		val nodeProducer = Iterator.continually(nodes(Random.nextInt(nodes.size)))
-		def randomDifNodes(count: Int) : Set[g.NodeT] = {
+		def nodeProducer(random: Random) = Iterator.continually(nodes(random.nextInt(nodes.size)))
+		def randomDifNodes(count: Int, random: Random) : Set[g.NodeT] = {
 			val set = mutable.Set[g.NodeT]()
-			nodeProducer.map { node ⇒
+			nodeProducer(random).map { node ⇒
 				set += node
 			} takeWhile(_ ⇒ set.size < count) foreach { _ ⇒ } // force evaluation.
 			set.toSet
@@ -88,10 +83,16 @@ object Metric {
 
 		Random.setSeed(System.currentTimeMillis())
 		(0 to samples).par.count { _ ⇒
-			val Seq(node1, node2, node3, node4) = randomDifNodes(4).toSeq
-			val route1 = Routing.route(g, g0)(node1, node2)
-			val route2 = Routing.route(g, g0)(node3, node4)
-			pathsCollide(route1, route2)
+			val threadLocalRandom = ThreadLocalRandom.current()
+			// Draw `concurrentPaths`*2 distinct nodes, and calculate paths.
+			val nodes = randomDifNodes(2*concurrentPaths, threadLocalRandom).toSeq
+			val routes = nodes.grouped(2).map {
+				case Seq(node1, node2) ⇒ Routing.route(g, g0)(node1, node2)
+			}
+			// Check if any two paths collide.
+			routes.toSeq.combinations(2).exists {
+				case Seq(path1, path2) ⇒ pathsCollide(path1, path2)
+			}
 		}
 	}
 }

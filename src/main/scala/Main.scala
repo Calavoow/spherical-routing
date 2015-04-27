@@ -10,7 +10,7 @@ import scalax.collection.immutable.Graph
 
 object Main {
 	def main(args: Array[String]) {
-		val g = Units.triangle
+		val g = Units.icosahedron
 
 //		var counter = 1
 		def iterateSubdivs = {
@@ -23,21 +23,13 @@ object Main {
 			}
 		}
 
-//		val collisions = iterateSubdivs.map { graph ⇒
-//			Metric.randomCollisionCount(graph, g, 10000)
-//		} take(8) foreach { collisions ⇒
-//			print("," + collisions)
-//		}
-
-		val graph = iterateSubdivs.drop(4).next()
-		println(getNode(graph, 61))
-		println(getNode(graph, 41))
-		println(getNode(graph, 40))
-		println(getNode(graph, 14))
-		println(getNode(graph, 13))
-		println(getNode(graph, 4))
-		println(getNode(graph, 6))
-		println(getNode(graph, 5))
+		iterateSubdivs.drop(2).map { graph ⇒
+			(2 to 10).map { concurrentPaths ⇒
+				Metric.randomCollisionCount(g = graph, g0 = g, concurrentPaths, 10000)
+			}
+		} foreach { collisions ⇒
+			println(collisions.mkString(","))
+		}
 	}
 
 	def getNode(g: Graph[Units.Node, UnDiEdge], id: Int) : g.NodeT = {
@@ -59,6 +51,12 @@ object Main {
 
 		writeToFile("pathCountRouting_ico.csv", mapsToString(pathsPerLayerRouting, 5))
 		writeToFile("pathCountingShortest.csv", mapsToString(pathsPerLayerShortest, 4))
+	}
+
+	def instrumentRandomCollisions(g: Graph[Node, UnDiEdge], iterateSubdivs: Iterator[Graph[Node, UnDiEdge]]) = {
+		iterateSubdivs.map { graph ⇒
+			Metric.randomCollisionCount(graph, g, concurrentPaths = 2, samples = 10000)
+		}
 	}
 
 	def writeToFile(fileName: String, content: String) {
