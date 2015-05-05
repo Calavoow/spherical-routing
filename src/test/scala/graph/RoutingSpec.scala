@@ -1,6 +1,7 @@
 package graph
 
-import graph.Units._
+import graph.sphere.{Routing, SphereApproximation, Units}
+import Units._
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Random

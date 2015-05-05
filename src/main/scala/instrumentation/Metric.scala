@@ -1,7 +1,8 @@
 package instrumentation
 
-import graph.Routing
-import graph.Units._
+import graph.sphere.{Units, Routing}
+import Units._
+import graph.sphere.Routing
 
 import scala.collection.mutable
 import scala.concurrent.forkjoin.ThreadLocalRandom

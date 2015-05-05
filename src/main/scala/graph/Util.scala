@@ -1,6 +1,7 @@
 package graph
 
-import graph.Units._
+import graph.sphere.Units
+import Units._
 
 import scala.annotation.tailrec
 import scala.language.higherKinds

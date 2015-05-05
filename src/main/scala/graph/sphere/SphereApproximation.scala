@@ -1,11 +1,10 @@
-package graph
-
-import graph.Units.{Label, Node}
+package graph.sphere
 
 import scala.language.postfixOps
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
+import Units._
 
 object SphereApproximation {
 

@@ -1,6 +1,7 @@
 package graph
 
-import graph.Units._
+import graph.sphere.{SphereApproximation, Units}
+import Units._
 import graph.Util.triangles
 import org.scalatest.{FlatSpec, Matchers}
 

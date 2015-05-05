@@ -1,4 +1,4 @@
-package graph
+package graph.sphere
 
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._

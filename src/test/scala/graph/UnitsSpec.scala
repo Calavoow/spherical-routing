@@ -1,5 +1,6 @@
 package graph
 
+import graph.sphere.Units
 import org.scalatest.{FlatSpec, Matchers}
 import Util.RichGraph
 

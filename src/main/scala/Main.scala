@@ -1,7 +1,6 @@
 import java.io.PrintWriter
 
-import graph._
-import graph.Units._
+import graph.{Dot, sphere, ring}
 import instrumentation.Metric
 
 import scalax.collection.GraphEdge._
@@ -10,33 +9,23 @@ import scalax.collection.immutable.Graph
 
 object Main {
 	def main(args: Array[String]) {
-		val g = Units.icosahedron
+		val g = ring.Units.ring(0)
 
-//		var counter = 1
-		def iterateSubdivs = {
-			Iterator.iterate(g) { graph ⇒
-//				println("Calculating subdivision")
-				SphereApproximation.subdivide(graph)
-				//			writeToFile(s"subdiv_tri$counter", Dot.toDot(subdiv))
-				//			counter += 1
-				//			subdiv
-			}
-		}
-
-		iterateSubdivs.drop(2).map { graph ⇒
-			(2 to 10).map { concurrentPaths ⇒
-				Metric.randomCollisionCount(g = graph, g0 = g, concurrentPaths, 10000)
-			}
-		} foreach { collisions ⇒
-			println(collisions.mkString(","))
-		}
+		var counter = 0
+		Iterator.from(0).map { i ⇒
+			println("Calculating ring")
+			val subdiv = ring.Units.ring(i)
+			writeToFile(s"ring_$counter", Dot.toDot(subdiv))
+			counter += 1
+			subdiv
+		} take(4) foreach{ _ ⇒ }
 	}
 
-	def getNode(g: Graph[Units.Node, UnDiEdge], id: Int) : g.NodeT = {
+	def getNode(g: Graph[sphere.Units.Node, UnDiEdge], id: Int) : g.NodeT = {
 		g.nodes.find(_.id == id).get
 	}
 
-	def instrumentPathCount(g: Graph[Node ,UnDiEdge], iterateSubdivs: Iterator[Graph[Node, UnDiEdge]]) = {
+	def instrumentPathCount(g: Graph[sphere.Units.Node ,UnDiEdge], iterateSubdivs: Iterator[Graph[sphere.Units.Node, UnDiEdge]]) = {
 		val pathsPerLayerRouting = iterateSubdivs.map { graph ⇒
 			Metric.countRoutingPaths(graph, g)
 		}
@@ -53,9 +42,19 @@ object Main {
 		writeToFile("pathCountingShortest.csv", mapsToString(pathsPerLayerShortest, 4))
 	}
 
-	def instrumentRandomCollisions(g: Graph[Node, UnDiEdge], iterateSubdivs: Iterator[Graph[Node, UnDiEdge]]) = {
+	def instrumentRandomCollisions(g: Graph[sphere.Units.Node, UnDiEdge], iterateSubdivs: Iterator[Graph[sphere.Units.Node, UnDiEdge]]) = {
 		iterateSubdivs.map { graph ⇒
 			Metric.randomCollisionCount(graph, g, concurrentPaths = 2, samples = 10000)
+		}
+	}
+
+	def instrumentCollisionsAndConcurrent(g: Graph[sphere.Units.Node, UnDiEdge], iterateSubdivs: Iterator[Graph[sphere.Units.Node, UnDiEdge]]) = {
+		iterateSubdivs.drop(2).map { graph ⇒
+			(2 to 10).map { concurrentPaths ⇒
+				Metric.randomCollisionCount(g = graph, g0 = g, concurrentPaths, 10000)
+			}
+		} foreach { collisions ⇒
+			println(collisions.mkString(","))
 		}
 	}
 

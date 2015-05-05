@@ -1,12 +1,11 @@
-package graph
-
-import graph.Units.Node
+package graph.sphere
 
 import scala.annotation.tailrec
 import scala.language.postfixOps
 import scala.util.Random
 import scalax.collection.GraphEdge._
 import scalax.collection.immutable.Graph
+import Units._
 
 object Routing {
 	/**
