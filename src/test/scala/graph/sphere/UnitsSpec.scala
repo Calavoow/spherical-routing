@@ -1,8 +1,7 @@
-package graph
+package graph.sphere
 
-import graph.sphere.Units
 import org.scalatest.{FlatSpec, Matchers}
-import Util.RichGraph
+import graph.Util.RichGraph
 
 class UnitsSpec extends FlatSpec with Matchers {
 	"The Icosahedron" should "have a diameter of 3" in {

@@ -1,5 +1,6 @@
 package graph.ring
 
+import scala.annotation.tailrec
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
@@ -14,7 +15,7 @@ object Units {
 	def ring(subdivisions: Int) : Graph[Node, UnDiEdge]= {
 		// Assume that the nr of nodes fits in an Int.
 		// (Some collections dont support more than Int.MaxValue elements anyway.)
-		val nrNodes = 4 * BigInt(2).pow(subdivisions).toInt
+		val nrNodes = 4 * subdivisions.twoPowerOf
 		val nodes = 0 until nrNodes
 
 		/**
@@ -29,8 +30,7 @@ object Units {
 			} toSeq
 		}
 		// For each cycle order, create edges.
-		val maxOrder = p(nrNodes - 1)
-		val edges = (0 to maxOrder).map { order ⇒
+		val edges = (0 to (subdivisions+1)).map { order ⇒
 			val orderNodes = nodes.filter { nodeID ⇒
 				(nodeID % order.twoPowerOf) == 0
 			}
@@ -45,10 +45,15 @@ object Units {
 	 * @return The cycle order.
 	 */
 	def p(x: Int) : Int = {
-		val qualifyingK = Iterator.from(0).takeWhile{ k ⇒
-			// x (mod 2^k) = 0
-			x % BigInt(2).pow(k).toInt == 0
+		if(x == 0) Int.MaxValue
+		else {
+			val k = 31 - Integer.numberOfLeadingZeros(x)
+			// The closest 2^k to x, rounded down.
+			val powTwo = k.twoPowerOf
+			gcd(x, powTwo)
 		}
-		qualifyingK.toSeq.last
 	}
+
+	@tailrec
+	def gcd(a: Int, b: Int): Int = if (b == 0) a.abs else gcd(b, a % b)
 }

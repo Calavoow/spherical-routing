@@ -11,14 +11,19 @@ object Main {
 	def main(args: Array[String]) {
 		val g = ring.Units.ring(0)
 
-		var counter = 0
-		Iterator.from(0).map { i ⇒
+		val rings = Iterator.from(0).map { i ⇒
 			println("Calculating ring")
-			val subdiv = ring.Units.ring(i)
-			writeToFile(s"ring_$counter", Dot.toDot(subdiv))
-			counter += 1
-			subdiv
-		} take(4) foreach{ _ ⇒ }
+			ring.Units.ring(i)
+//			writeToFile(s"ring_$counter.dot", Dot.toDot(subdiv))
+//			counter += 1
+//			subdiv
+		}
+
+		val g3 = ring.Units.ring(2)
+		println(g3.edges)
+		val n1 = g3.get(1)
+		val n2 = g3.get(5)
+		println(ring.Routing.route(g3)(n1,n2))
 	}
 
 	def getNode(g: Graph[sphere.Units.Node, UnDiEdge], id: Int) : g.NodeT = {

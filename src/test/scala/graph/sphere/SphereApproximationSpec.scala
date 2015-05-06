@@ -1,8 +1,7 @@
-package graph
+package graph.sphere
 
-import graph.sphere.{SphereApproximation, Units}
-import Units._
 import graph.Util.triangles
+import graph.sphere.Units._
 import org.scalatest.{FlatSpec, Matchers}
 
 import scalax.collection.GraphEdge._
