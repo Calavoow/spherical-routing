@@ -4,14 +4,18 @@ import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
 
+import graph.Util.TwoPower
+
 import scala.language.postfixOps
 
 object Units {
-	type Node = BigInt
+	type Node = Int
 
 	def ring(subdivisions: Int) : Graph[Node, UnDiEdge]= {
-		val nrNodes = 4 * BigInt(2).pow(subdivisions)
-		val nodes = BigInt(0) until nrNodes
+		// Assume that the nr of nodes fits in an Int.
+		// (Some collections dont support more than Int.MaxValue elements anyway.)
+		val nrNodes = 4 * BigInt(2).pow(subdivisions).toInt
+		val nodes = 0 until nrNodes
 
 		/**
 		 * Make a ring between the given nodes.
@@ -27,7 +31,9 @@ object Units {
 		// For each cycle order, create edges.
 		val maxOrder = p(nrNodes - 1)
 		val edges = (0 to maxOrder).map { order ⇒
-			val orderNodes = nodes.filter(_ % BigInt(2).pow(order) == 0)
+			val orderNodes = nodes.filter { nodeID ⇒
+				(nodeID % order.twoPowerOf) == 0
+			}
 			sequentialEdges(orderNodes)
 		} reduce(_ ++ _) // Flatten all edges to one big sequence.
 		Graph.from[Node, UnDiEdge](edges = edges)
@@ -38,9 +44,10 @@ object Units {
 	 * @param x The index of a node.
 	 * @return The cycle order.
 	 */
-	def p(x: BigInt) : Int = {
+	def p(x: Int) : Int = {
 		val qualifyingK = Iterator.from(0).takeWhile{ k ⇒
-			x % BigInt(2).pow(k) == BigInt(0)
+			// x (mod 2^k) = 0
+			x % BigInt(2).pow(k).toInt == 0
 		}
 		qualifyingK.toSeq.last
 	}

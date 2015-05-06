@@ -33,23 +33,8 @@ object Routing {
 					val randomNode = Random.shuffle(commonNeighbours.toSeq).head
 					recursion(randomNode :: as, bs, i+1)
 				} else {
-					def step(head: g.NodeT, origin: g.NodeT) : g.NodeT = {
-						val twoI = BigInt(2).pow(i)
-						val n = g.nodes.size
-						val headIndex : BigInt = head
-						val originIndex : BigInt = origin
-						if(head.mod(twoI) == BigInt(0)) {
-							head
-						} else if (p(headIndex + twoI) > p(originIndex - twoI)) {
-							val node = (headIndex + twoI).mod(n)
-							g.get(node)
-						} else {
-							val node = (headIndex - twoI).mod(n)
-							g.get(node)
-						}
-					}
-					val aNext = step(as.head, a)
-					val bNext = step(as.head, b)
+					val aNext = step(g)(as.head, a, i)
+					val bNext = step(g)(as.head, b, i)
 					recursion(aNext :: as, bNext :: bs, i+1)
 				}
 			}
@@ -65,5 +50,23 @@ object Routing {
 			assert(pathBuilder.add(bEl))
 		}
 		pathBuilder.result()
+	}
+
+
+	private def step(g : Graph[Node, UnDiEdge])(head: g.NodeT, origin: g.NodeT, iteration: Int) : g.NodeT = {
+		val twoI = BigInt(2).pow(iteration-1).toInt
+		val n = g.nodes.size
+		// Explicitly get Int values, needed to perform Integer addition and not String concatenation.
+		val headIndex : Int = head
+		val originIndex : Int = origin
+		if(head % twoI == 0) {
+			head
+		} else if (p(headIndex + twoI) > p(originIndex - twoI)) {
+			val node = (headIndex + twoI) % n
+			g.get(node)
+		} else {
+			val node = (headIndex - twoI) % n
+			g.get(node)
+		}
 	}
 }

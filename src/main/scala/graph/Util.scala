@@ -25,6 +25,18 @@ object Util {
 		}
 	}
 
+	implicit class TwoPower(num: Int) {
+		/**
+		 * Calculate two to the power of this integer.
+		 *
+		 * I.e. 2^num
+		 * @return 2^num
+		 */
+		def twoPowerOf: Int = {
+			1 << num
+		}
+	}
+
 	/**
 	 * Find the set of triangles, where each triangles is represented by a set of 3.
 	 *
