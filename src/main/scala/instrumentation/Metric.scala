@@ -1,8 +1,7 @@
 package instrumentation
 
-import graph.sphere.{Units, Routing}
-import Units._
-import graph.sphere.Routing
+import graph.Util.Layered
+import graph.{ring, sphere}
 
 import scala.collection.mutable
 import scala.concurrent.forkjoin.ThreadLocalRandom
@@ -11,34 +10,38 @@ import scalax.collection.GraphEdge._
 import scalax.collection.immutable.Graph
 
 object Metric {
-	trait Router {
-		def route(g: Graph[Node,UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path
+	trait Router[T] {
+		def route(g: Graph[T,UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path
 	}
 
-	def countShortestPaths(g: Graph[Node, UnDiEdge]): Map[Int, Int] = {
-		val router = new Router {
-			override def route(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
+	def countShortestPaths[T : Layered](g: Graph[T, UnDiEdge]): Map[Int, Int] = {
+		val router = new Router[T] {
+			override def route(g: Graph[T, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
 				node1.shortestPathTo(node2).get
 			}
 		}
 		countPaths(g)(router)
 	}
 
-	def countRoutingPaths(g: Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Map[Int, Int] = {
-		val router = new Router {
+	def countRoutingPaths(g: Graph[sphere.Units.Node, UnDiEdge], g0: Graph[sphere.Units.Node, UnDiEdge]): Map[Int, Int] = {
+		import sphere.Units.Node
+		val router = new Router[sphere.Units.Node] {
 			override def route(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
-				Routing.route(g, g0)(node1, node2)
+				sphere.Routing.route(g, g0)(node1, node2)
 			}
 		}
 		countPaths(g)(router)
 	}
 
-	def countPaths(g: Graph[Node, UnDiEdge])(router: Router) : Map[Int, Int] = {
+	def countPaths[T : Layered](g: Graph[T, UnDiEdge])(router: Router[T]) : Map[Int, Int] = {
 		def pathToLayers(path: g.Path) : Map[Int, Int] = {
+			// Cannot use edges, because they can occur twice in a path.
 			val layers = path.nodes.toIterator.sliding(2).map {
 				case Seq(node1, node2) =>
 					// The layer of the edge.
-					Math.max(node1.layer, node2.layer)
+					val layer1 = implicitly[Layered[T]].layer(node1)
+					val layer2 = implicitly[Layered[T]].layer(node2)
+					Math.max(layer1, layer2)
 			}
 			// Transform into Map(Layer -> Number of edges in that layer)
 			layers.toSeq.groupBy(identity).mapValues(_.size)
@@ -66,34 +69,37 @@ object Metric {
 		} reduce(sumMapByKey)
 	}
 
-	def randomCollisionCount(g: Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge], concurrentPaths: Int, samples: Int) : Int = {
+	def randomCollisionCount[T : Layered](g: Graph[T, UnDiEdge], concurrentPaths: Int, samples: Int)(router: Router[T]) : Iterator[Option[Int]] = {
 		val nodes = g.nodes.toVector
-		def nodeProducer(random: Random) = Iterator.continually(nodes(random.nextInt(nodes.size)))
-		def randomDifNodes(count: Int, random: Random) : Set[g.NodeT] = {
-			val set = mutable.Set[g.NodeT]()
-			nodeProducer(random).map { node ⇒
-				set += node
-			} takeWhile(_ ⇒ set.size < count) foreach { _ ⇒ } // force evaluation.
-			set.toSet
+		def randomDifNodes(random: Random) : Stream[g.NodeT] = {
+			Stream.continually(nodes(random.nextInt(nodes.size))).distinct
 		}
 
-		def pathsCollide(path1: g.Path, path2: g.Path) : Boolean = {
+		def pathsCollide(path1: g.Path, path2: g.Path) : Option[g.EdgeT] = {
 			val edges1 = path1.edges.toSet
-			path2.edges.exists(edges1)
+			path2.edges.find(edges1)
 		}
 
 		Random.setSeed(System.currentTimeMillis())
-		(0 to samples).par.count { _ ⇒
+		// Parallellize sampling!
+		val sampledLayers = (0 to samples).map { _ ⇒
 			val threadLocalRandom = ThreadLocalRandom.current()
 			// Draw `concurrentPaths`*2 distinct nodes, and calculate paths.
-			val nodes = randomDifNodes(2*concurrentPaths, threadLocalRandom).toSeq
+			val nodes = randomDifNodes(threadLocalRandom).take(2*concurrentPaths)
 			val routes = nodes.grouped(2).map {
-				case Seq(node1, node2) ⇒ Routing.route(g, g0)(node1, node2)
+				case Seq(node1, node2) ⇒ router.route(g)(node1, node2)
 			}
 			// Check if any two paths collide.
-			routes.toSeq.combinations(2).exists {
-				case Seq(path1, path2) ⇒ pathsCollide(path1, path2)
+			routes.toSeq.combinations(2).map {
+				case Seq(path1, path2) ⇒
+					pathsCollide(path1, path2).map{ edge ⇒
+					val Seq(node1, node2) = edge.nodeSeq
+					val layer1 = implicitly[Layered[T]].layer(node1)
+					val layer2 = implicitly[Layered[T]].layer(node2)
+					Math.max(layer1, layer2)
+				}
 			}
 		}
+		sampledLayers.reduce(_ ++ _)
 	}
 }

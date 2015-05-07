@@ -1,10 +1,13 @@
 package graph.sphere
 
+import graph.Util.Layered
+
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
 
 object Units {
+	type Sphere = Graph[Node, UnDiEdge]
 
 	object Label {
 		def apply(i: Int) = new Label(Vector(Set(i)), 0)
@@ -35,6 +38,10 @@ object Units {
 				case (unfilteredEl, prefixSet) ⇒ unfilteredEl -- prefixSet
 			}
 			new Label(Set(id) +: filteredLabel, parent1.layer.max(parent2.layer) + 1)
+		}
+
+		implicit object LayeredLabel extends Layered[Label] {
+			def layer(x: Label) = x.layer
 		}
 	}
 

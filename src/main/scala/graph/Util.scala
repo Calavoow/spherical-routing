@@ -37,6 +37,10 @@ object Util {
 		}
 	}
 
+	trait Layered[T] {
+		def layer(a: T): Int
+	}
+
 	/**
 	 * Find the set of triangles, where each triangles is represented by a set of 3.
 	 *

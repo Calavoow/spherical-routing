@@ -1,5 +1,7 @@
 package graph.sphere
 
+import instrumentation.Metric.Router
+
 import scala.annotation.tailrec
 import scala.language.postfixOps
 import scala.util.Random
@@ -125,4 +127,11 @@ object Routing {
 			recursiveLabelRoute(g)(child, bestNeighbor, parent :: path)
 		}
 	}
+
+	case class SphereRouter(g0: Sphere) extends Router[Node] {
+		override def route(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
+			Routing.route(g = g, g0 = g0)(node1, node2)
+		}
+	}
 }
+

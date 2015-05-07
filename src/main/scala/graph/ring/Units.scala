@@ -5,12 +5,13 @@ import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
 
-import graph.Util.TwoPower
+import graph.Util.{Layered, TwoPower}
 
 import scala.language.postfixOps
 
 object Units {
 	type Node = Int
+	type Ring = Graph[Node, UnDiEdge]
 
 	def ring(subdivisions: Int) : Graph[Node, UnDiEdge]= {
 		// Assume that the nr of nodes fits in an Int.
@@ -44,16 +45,23 @@ object Units {
 	 * @param x The index of a node.
 	 * @return The cycle order.
 	 */
-	def p(x: Int) : Int = {
-		if(x == 0) Int.MaxValue
-		else {
-			val k = 31 - Integer.numberOfLeadingZeros(x)
-			// The closest 2^k to x, rounded down.
-			val powTwo = k.twoPowerOf
-			gcd(x, powTwo)
-		}
+	def p(x: Node) : Int = {
+		Integer.numberOfTrailingZeros(x)
 	}
+
+	/**
+	 * The cycle order of the edge between x and y.
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	def q(x: Node, y: Node) : Int = p(x).min(p(y))
 
 	@tailrec
 	def gcd(a: Int, b: Int): Int = if (b == 0) a.abs else gcd(b, a % b)
+
+
+	implicit object LayeredNode extends Layered[Node] {
+		override def layer(a: Node): Int = p(a)
+	}
 }

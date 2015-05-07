@@ -1,5 +1,7 @@
 package graph.ring
 
+import instrumentation.Metric.Router
+
 import scala.annotation.tailrec
 import scala.util.Random
 import scalax.collection.GraphEdge._
@@ -8,8 +10,8 @@ import scalax.collection.immutable.Graph
 import Units._
 import graph.Util.TwoPower
 
-object Routing {
-	def route(g: Graph[Node,UnDiEdge])(from: g.NodeT, to: g.NodeT) = {
+object Routing extends Router[Node] {
+		override def route(g: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT) : g.Path = {
 		Random.setSeed(System.currentTimeMillis())
 		/**
 		 * Recursively fill the steps towards a common node.
@@ -42,12 +44,6 @@ object Routing {
 		val pathBuilder = g.newPathBuilder(from)
 		pathBuilder ++= as.reverse
 		pathBuilder ++= bs
-//		for(aEl ← as.reverse.drop(1)) {
-//			assert(pathBuilder.add(aEl), s"Unable to add $aEl to ${pathBuilder.result()}.\n From/to: $from/$to")
-//		}
-//		for(bEl  ← bs) {
-//			assert(pathBuilder.add(bEl))
-//		}
 		pathBuilder.result()
 	}
 
