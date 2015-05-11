@@ -48,7 +48,8 @@ object SphereApproximation {
 		// Calculate which labels the new nodes should get.
 		val newLabels = edgeLabels(g)(subdivisionEdges, currentMaxLabel)
 
-		val newEdges = subdivisionEdges.par.flatMap { edge ⇒
+//		val newEdges = subdivisionEdges.par.flatMap { edge ⇒
+		val newEdges = subdivisionEdges.flatMap { edge ⇒
 			val currentLabel = newLabels(edge)
 			// Collect the two triangles that have at least two nodes in common with the edge.
 			val relTri = relevantTriangles(g)(edge, iteration)

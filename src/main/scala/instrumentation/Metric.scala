@@ -1,13 +1,15 @@
 package instrumentation
 
 import graph.Util.Layered
-import graph.{ring, sphere}
+import graph.sphere.Routing.SphereRouter
+import graph.{Util, ring, sphere}
 
 import scala.collection.mutable
 import scala.concurrent.forkjoin.ThreadLocalRandom
 import scala.util.Random
-import scalax.collection.GraphEdge._
 import scalax.collection.immutable.Graph
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import Util.Layered
 
 object Metric {
 	trait Router[T] {
@@ -23,14 +25,10 @@ object Metric {
 		countPaths(g)(router)
 	}
 
-	def countRoutingPaths(g: Graph[sphere.Units.Node, UnDiEdge], g0: Graph[sphere.Units.Node, UnDiEdge]): Map[Int, Int] = {
+	def countRoutingPaths(g: Graph[sphere.Units.Node, UnDiEdge], g0: Graph[sphere.Units.Node, UnDiEdge])
+	                     (ancestorRouter: (g0.NodeT, g0.NodeT) => g0.Path): Map[Int, Int] = {
 		import sphere.Units.Node
-		val router = new Router[sphere.Units.Node] {
-			override def route(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
-				sphere.Routing.route(g, g0)(node1, node2)
-			}
-		}
-		countPaths(g)(router)
+		countPaths(g)(SphereRouter(g0)(ancestorRouter))
 	}
 
 	def countPaths[T : Layered](g: Graph[T, UnDiEdge])(router: Router[T]) : Map[Int, Int] = {
@@ -69,7 +67,7 @@ object Metric {
 		} reduce(sumMapByKey)
 	}
 
-	def randomCollisionCount[T : Layered](g: Graph[T, UnDiEdge], concurrentPaths: Int, samples: Int)(router: Router[T]) : Iterator[Option[Int]] = {
+	def randomCollisionCount[T : Layered](g: Graph[T, UnDiEdge], concurrentPaths: Int, samples: Int)(router: Router[T]) : Seq[Option[Int]] = {
 		val nodes = g.nodes.toVector
 		def randomDifNodes(random: Random) : Stream[g.NodeT] = {
 			Stream.continually(nodes(random.nextInt(nodes.size))).distinct
@@ -82,7 +80,7 @@ object Metric {
 
 		Random.setSeed(System.currentTimeMillis())
 		// Parallellize sampling!
-		val sampledLayers = (0 to samples).map { _ ⇒
+		(0 to samples).map { _ ⇒
 			val threadLocalRandom = ThreadLocalRandom.current()
 			// Draw `concurrentPaths`*2 distinct nodes, and calculate paths.
 			val nodes = randomDifNodes(threadLocalRandom).take(2*concurrentPaths)
@@ -90,16 +88,17 @@ object Metric {
 				case Seq(node1, node2) ⇒ router.route(g)(node1, node2)
 			}
 			// Check if any two paths collide.
-			routes.toSeq.combinations(2).map {
-				case Seq(path1, path2) ⇒
-					pathsCollide(path1, path2).map{ edge ⇒
-					val Seq(node1, node2) = edge.nodeSeq
-					val layer1 = implicitly[Layered[T]].layer(node1)
-					val layer2 = implicitly[Layered[T]].layer(node2)
-					Math.max(layer1, layer2)
-				}
+			val checkCollision = routes.foldLeft[(Set[g.EdgeT], Option[g.EdgeT])]((Set.empty, None)) {
+				case ((previousEdges, collision), path) ⇒
+					val collidingEdge = collision.orElse(path.edges.find(previousEdges))
+					(previousEdges ++ path.edges, collidingEdge)
+			}
+			val collidingEdge = checkCollision._2
+			collidingEdge.map { e ⇒
+				Layered.edgeLayer[T](e.toOuter).layer(e.toOuter)
 			}
 		}
-		sampledLayers.reduce(_ ++ _)
+		// Reserialize
+//		sampled.seq
 	}
 }

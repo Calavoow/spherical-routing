@@ -41,7 +41,7 @@ object Routing extends Router[Node] {
 
 		// Build a path out of the node lists.
 		val (as, bs) = recursion(List(from), List(to), 1)
-		val pathBuilder = g.newPathBuilder(from)
+		val pathBuilder = g.newPathBuilder(from)(sizeHint = 64)
 		pathBuilder ++= as.reverse
 		pathBuilder ++= bs
 		pathBuilder.result()

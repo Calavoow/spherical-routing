@@ -19,8 +19,9 @@ object Routing {
 	 * @param to The node to route towards.
 	 * @return The route.
 	 */
-	def route(g: Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge])(from: g.NodeT, to: g.NodeT): g.Path = {
-		val path = g.newPathBuilder(from)
+	def route(g: Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge])
+	         (from: g.NodeT, to: g.NodeT, ancestorPath: (g0.NodeT, g0.NodeT) ⇒ g0.Path): g.Path = {
+		val path = g.newPathBuilder(from)(sizeHint = 64)
 		path.add(from)
 		// Step 1 Check if they are adjacent
 		if( path.add(to) ) return path.result()
@@ -28,40 +29,29 @@ object Routing {
 		// Try to find a common ancestor.
 		val commonAncestor = closestAncestor(g)(from, to)
 		// If there is no common ancestor, we need to route on the lowest layer. Otherwise we are already done.
-		val ancestorPath: g.Path = commonAncestor match {
+		val ancestPath: g.Path = commonAncestor match {
 			case None =>
 				// No common ancestor.
-				// For efficiency, use the graph of only layer 0.
-				// Make a local copy, because of a racing condition in shortestPathTo.
-				val g0_2 = Graph.apply[Node,UnDiEdge](g0.edges.toSeq:_*)
-				val paths = for (parentID1 <- from.label.last if g0_2.nodes.exists(_.id == parentID1);
-				                 parentID2 <- to.label.last if g0_2.nodes.exists(_.id == parentID2))
-					yield {
-						val p1 = g0_2.nodes.find(_.id == parentID1).get
-						val p2 = g0_2.nodes.find(_.id == parentID2).get
-						// shortestPathTo has a racing condition.
-						p1.shortestPathTo(p2).get // The graph is connected, so there is always a path.
-					}
-				val lowestPath = paths.minBy(_.size)
-
-				// Convert lowestGraph.Path to our larger graph g.Path.
-				val gNodes = lowestPath.nodes.map { lowNode =>
-					g.get(lowNode)
+				val g0Path = ancestorPath(from, to)
+				// Convert g0Copy.Path to our larger graph g.Path.
+				val gNodes = g0Path.nodes.map { g0Node =>
+					g.get(g0Node)
 				}
-				val builder = g.newPathBuilder(gNodes.head)
+				// Path is at most of length 3.
+				val builder = g.newPathBuilder(gNodes.head)(sizeHint = 3)
 				builder.++=(gNodes.tail).result()
-
 			case Some(ancestor) =>
 				// Otherwise construct an empty path.
-				g.newPathBuilder(ancestor).result()
+				g.newPathBuilder(ancestor)(sizeHint = 1).result()
 		}
 
 		// Find the path to and from the parent.
-		val fromToParent = labelRoute(g)(child = from, parent = ancestorPath.nodes.head)
-		val toToParent = labelRoute(g)(child = to, parent = ancestorPath.nodes.last)
+		val fromToParent = labelRoute(g)(child = from, parent = ancestPath.nodes.head)
+		val toToParent = labelRoute(g)(child = to, parent = ancestPath.nodes.last)
 		// Construct the complete path.
-		path.++=(fromToParent.nodes).++=(ancestorPath.nodes).++=(toToParent.nodes.toSeq.reverse).result()
+		path.++=(fromToParent.nodes).++=(ancestPath.nodes).++=(toToParent.nodes.toSeq.reverse).result()
 	}
+
 
 	/**
 	 * Find the closest common ancestor of two given nodes.
@@ -104,7 +94,7 @@ object Routing {
 	private def recursiveLabelRoute(g: Graph[Node, UnDiEdge])(child: g.NodeT, parent: g.NodeT, path: List[g.NodeT]): g.Path = {
 		if( child == parent ) {
 			// The base case, where the child node has been reached.
-			val builder = g.newPathBuilder(child)
+			val builder = g.newPathBuilder(child)(sizeHint = 32) // For 32 layers this size will be reached.
 			builder ++= path
 			builder.result()
 		} else {
@@ -128,9 +118,9 @@ object Routing {
 		}
 	}
 
-	case class SphereRouter(g0: Sphere) extends Router[Node] {
+	case class SphereRouter(g0: Sphere)(ancestorRouter: (g0.NodeT, g0.NodeT) ⇒ g0.Path) extends Router[Node] {
 		override def route(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
-			Routing.route(g = g, g0 = g0)(node1, node2)
+			Routing.route(g = g, g0 = g0)(node1, node2, ancestorRouter)
 		}
 	}
 }

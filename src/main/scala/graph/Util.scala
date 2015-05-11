@@ -4,7 +4,7 @@ import graph.sphere.Units
 import Units._
 
 import scala.annotation.tailrec
-import scala.language.higherKinds
+import scala.language.{higherKinds,implicitConversions}
 import scalax.collection.GraphEdge.UnDiEdge
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
@@ -39,6 +39,16 @@ object Util {
 
 	trait Layered[T] {
 		def layer(a: T): Int
+	}
+	object Layered{
+		implicit def edgeLayer[T: Layered](edge : UnDiEdge[T]) : Layered[UnDiEdge[T]] = new Layered[UnDiEdge[T]] {
+			override def layer(e: UnDiEdge[T]) : Int = {
+				val Seq(node1, node2) = edge.nodeSeq
+				val layer1 = implicitly[Layered[T]].layer(node1)
+				val layer2 = implicitly[Layered[T]].layer(node2)
+				Math.max(layer1, layer2)
+			}
+		}
 	}
 
 	/**

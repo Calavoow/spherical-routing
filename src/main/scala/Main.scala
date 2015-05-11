@@ -36,6 +36,12 @@ object Main {
 		val g0 = sphere.Units.icosahedron
 		val samples = 10000
 
+		val ancestorPaths = g0.nodes.toSeq.combinations(2).map {
+			case Seq(node1, node2) ⇒ (node1, node2) → node1.shortestPathTo(node2).get
+		}
+		val ancestorPathMap = ancestorPaths.toMap
+		def ancestorRouter(node1 : g0.NodeT, node2: g0.NodeT) : g0.Path = ancestorPathMap((node1, node2))
+
 		val rings : Iterator[Ring] = Iterator.from(0).map { i ⇒
 			ring.Units.ring(i)
 //			writeToFile(s"ring_$counter.dot", Dot.toDot(subdiv))
@@ -50,8 +56,9 @@ object Main {
 		try {
 			graphs.foreach {
 				case (ringG, sphereG) ⇒
-					println("Next iteration")
+					println(s"Next iteration, ring (${ringG.nodes.size}), sphere (${sphereG.nodes.size})")
 					val ringNodes = ringG.nodes.size
+					// Iterate through the number of concurrent paths.
 					(2 to 10).foreach { concurrentPaths ⇒
 						println(s"Concurrent paths: $concurrentPaths")
 						val ringCollisions = Metric.randomCollisionCount(g = ringG, concurrentPaths = concurrentPaths, samples)(ring.Routing)
@@ -59,7 +66,7 @@ object Main {
 						// Probably faster to concat in memory (`samples` integers) and then write at once.
 						ringFile.write(s"$ringNodes,$concurrentPaths,${ringCollisions.mkString(",")}\n")
 						ringFile.flush()
-						val sphereCollisions = Metric.randomCollisionCount(g = sphereG, concurrentPaths = concurrentPaths, samples)(sphere.Routing.SphereRouter(g0))
+						val sphereCollisions = Metric.randomCollisionCount(g = sphereG, concurrentPaths = concurrentPaths, samples)(sphere.Routing.SphereRouter(g0)(ancestorRouter))
 							.map(_.getOrElse(-1))
 						sphereFile.write(s"$ringNodes,$concurrentPaths,${sphereCollisions.mkString(",")}\n")
 						sphereFile.flush()
@@ -74,7 +81,7 @@ object Main {
 	def getNode(g: Graph[sphere.Units.Node, UnDiEdge], id: Int) : g.NodeT = {
 		g.nodes.find(_.id == id).get
 	}
-
+	/*
 	def instrumentPathCount(g: Graph[sphere.Units.Node ,UnDiEdge], iterateSubdivs: Iterator[Graph[sphere.Units.Node, UnDiEdge]]) = {
 		val pathsPerLayerRouting = iterateSubdivs.map { graph ⇒
 			Metric.countRoutingPaths(graph, g)
@@ -107,6 +114,7 @@ object Main {
 			println(collisions.mkString(","))
 		}
 	}
+	*/
 
 	def writeToFile(fileName: String, content: String) {
 		val writer = new PrintWriter(fileName)
