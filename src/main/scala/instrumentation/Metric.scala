@@ -12,12 +12,12 @@ import Util.Layered
 
 object Metric {
 	trait Router[N] {
-		def route(g: Graph[N, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path
+		def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path
 	}
 
 	def countShortestPaths[N : Layered](g: Graph[N, UnDiEdge]): Map[Int, Int] = {
 		val router = new Router[N] {
-			override def route(g: Graph[N, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
+			override def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path = {
 				node1.shortestPathTo(node2).get
 			}
 		}
@@ -52,12 +52,13 @@ object Metric {
 
 		// Split into smaller computation groups, and reduce them individually.
 		// To prevent memory issues.
+		val nrNodes = g.nodes.size
 		val combinationGroups = g.nodes.toSeq.combinations(2).grouped(50000)
 		combinationGroups.map { group ⇒
 			// Map the group in parallel.
 			group.par.map({
 				case Seq(node1, node2) =>
-					router.route(g)(node1, node2)
+					router.route(g,nrNodes)(node1, node2)
 			})
 				// Transform the path to a map of layer nr and count.
 				.map(pathToLayers)
@@ -84,7 +85,7 @@ object Metric {
 			// Draw `concurrentPaths`*2 distinct nodes, and calculate paths.
 			val nodes = randomDifNodes(threadLocalRandom).take(2*concurrentPaths)
 			val routes = nodes.grouped(2).map {
-				case Seq(node1, node2) ⇒ router.route(g)(node1, node2)
+				case Seq(node1, node2) ⇒ router.route(g, nodes.size)(node1, node2)
 			}
 			// Check if any two paths collide.
 			val checkCollision = routes.foldLeft[(Set[g.EdgeT], Option[g.EdgeT])]((Set.empty, None)) {

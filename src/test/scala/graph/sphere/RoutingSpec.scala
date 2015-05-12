@@ -13,7 +13,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 	"Labelroute" should "route from a child to a parent" in {
 		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
 		val child = g.nodes.find(_.id == 18).get
-		val parent = g.nodes.find(_.id == 2).get
+		val parent = g.nodes.find(_.id == 1).get
 		val path = Routing.labelRoute(g)(child = child, parent = parent)
 		assert(path.nodes.size == 3, s"Path was different than expected.\n $path")
 	}
@@ -93,7 +93,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 				case Seq(node1, node2) =>
 					val shortestPath = node1.shortestPathTo(node2).get
 					val route = Routing.route(g, triangle)(node1, node2, pathMap)
-					assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+					assert(shortestPath.nodes.size + 1 >= route.nodes.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
 			}
 		}
 	}

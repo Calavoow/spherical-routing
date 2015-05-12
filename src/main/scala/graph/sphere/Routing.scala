@@ -89,14 +89,27 @@ object Routing {
 	 *         Then routing must occur on the lowest layer.
 	 */
 	def closestAncestor(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): Option[g.NodeT] = {
-		val firstNonEmptyIntersection = node1.label.view.map { entries1 =>
-			node2.label.view.map(_ intersect entries1).find(_.nonEmpty)
-		} find (_.isDefined) flatten
+		val allNode2Parents = node2.label.reduce(_ ++ _)
+		val nonEmptyIntersection = node1.label.find { labelEntries1 ⇒
+			(labelEntries1 intersect allNode2Parents).nonEmpty
+		}
+//		val firstNonEmptyIntersection = node1.label.view.map { entries1 =>
+//			node2.label.view.map(_ intersect entries1).find(_.nonEmpty)
+//		} find (_.isDefined) flatten
 
-		firstNonEmptyIntersection.map { intersection =>
+		// Then take the elements from the nonEmptyIntersection which are closest to node2.
+		for(intersection ← nonEmptyIntersection) yield {
+			val groupedByDistance = intersection.groupBy { i ⇒
+				node2.label.indexWhere(_.contains(i))
+			}
+
+			val minDistance = groupedByDistance.minBy {
+				case (k,v) ⇒ k
+			}._2
+
 			// Pick a random ancestor, if there are two equidistant.
-			val id = Random.shuffle(intersection.toSeq).head
-			// The ancestor must exist
+			val id = Random.shuffle(minDistance.toSeq).head
+			// If we found the id, the ancestor must exist, so `get` it.
 			g.nodes.find(_.id == id).get
 		}
 	}
@@ -144,7 +157,7 @@ object Routing {
 
 	def sphereRouter(g0: Sphere)(ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path]): Router[Node] = {
 		new Router[Node] {
-			override def route(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
+			override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path = {
 				Routing.route(g = g, g0 = g0)(node1, node2, ancestorMap)
 			}
 		}

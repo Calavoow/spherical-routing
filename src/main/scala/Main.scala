@@ -5,7 +5,6 @@ import graph.sphere.Units.Sphere
 import graph.sphere.Units.Label.LayeredLabel
 import graph.{Util, Dot, sphere, ring}
 import instrumentation.Metric
-import instrumentation.Metric.Router
 
 import scala.io.StdIn
 import scalax.collection.GraphEdge._
