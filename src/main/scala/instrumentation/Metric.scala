@@ -79,7 +79,7 @@ object Metric {
 
 		Random.setSeed(System.currentTimeMillis())
 		// Parallellize sampling!
-		(0 to samples).map { _ ⇒
+		val sampled = (0 to samples).par.map { _ ⇒
 			val threadLocalRandom = ThreadLocalRandom.current()
 			// Draw `concurrentPaths`*2 distinct nodes, and calculate paths.
 			val nodes = randomDifNodes(threadLocalRandom).take(2*concurrentPaths)
@@ -98,6 +98,6 @@ object Metric {
 			}
 		}
 		// Reserialize
-//		sampled.seq
+		sampled.seq
 	}
 }
