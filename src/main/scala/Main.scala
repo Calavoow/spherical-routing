@@ -3,7 +3,7 @@ import java.io.{FileWriter, PrintWriter}
 import graph.ring.Units.{Ring,LayeredNode}
 import graph.sphere.Units.Sphere
 import graph.sphere.Units.Label.LayeredLabel
-import graph.{Dot, sphere, ring}
+import graph.{Util, Dot, sphere, ring}
 import instrumentation.Metric
 import instrumentation.Metric.Router
 
@@ -35,12 +35,8 @@ object Main {
 
 		val g0 = sphere.Units.icosahedron
 		val samples = 10000
+		val ancestorPathMap = Util.allShortestPaths(g0)
 
-		val ancestorPaths = g0.nodes.toSeq.combinations(2).map {
-			case Seq(node1, node2) ⇒ (node1, node2) → node1.shortestPathTo(node2).get
-		}
-		val ancestorPathMap = ancestorPaths.toMap
-		def ancestorRouter(node1 : g0.NodeT, node2: g0.NodeT) : g0.Path = ancestorPathMap((node1, node2))
 
 		val rings : Iterator[Ring] = Iterator.from(0).map { i ⇒
 			ring.Units.ring(i)
@@ -66,7 +62,10 @@ object Main {
 						// Probably faster to concat in memory (`samples` integers) and then write at once.
 						ringFile.write(s"$ringNodes,$concurrentPaths,${ringCollisions.mkString(",")}\n")
 						ringFile.flush()
-						val sphereCollisions = Metric.randomCollisionCount(g = sphereG, concurrentPaths = concurrentPaths, samples)(sphere.Routing.SphereRouter(g0)(ancestorRouter))
+						val sphereCollisions = Metric
+							.randomCollisionCount(g = sphereG,
+						        concurrentPaths = concurrentPaths,
+						        samples = samples) (sphere.Routing.sphereRouter(g0)(ancestorPathMap))
 							.map(_.getOrElse(-1))
 						sphereFile.write(s"$ringNodes,$concurrentPaths,${sphereCollisions.mkString(",")}\n")
 						sphereFile.flush()

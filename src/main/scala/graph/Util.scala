@@ -88,6 +88,12 @@ object Util {
 		}
 	}
 
+	def allShortestPaths[N](g: Graph[N,UnDiEdge]) : Map[(g.NodeT, g.NodeT), g.Path] = {
+		g.nodes.toSeq.combinations(2).map {
+			case Seq(node1, node2) ⇒ (node1, node2) → node1.shortestPathTo(node2).get
+		}.toMap
+	}
+
 	def factorial[T: Numeric](n: T) = recursiveFactorial(n, implicitly[Numeric[T]].fromInt(1))
 	@tailrec
 	private def recursiveFactorial[T: Numeric](n: T, accum: T): T = {

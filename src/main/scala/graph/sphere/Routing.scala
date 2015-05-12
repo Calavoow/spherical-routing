@@ -10,6 +10,7 @@ import scalax.collection.immutable.Graph
 import Units._
 
 object Routing {
+
 	/**
 	 * Use the routing algorithm to find a route `from` to the vertex `to`.
 	 *
@@ -20,7 +21,7 @@ object Routing {
 	 * @return The route.
 	 */
 	def route(g: Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge])
-	         (from: g.NodeT, to: g.NodeT, ancestorPath: (g0.NodeT, g0.NodeT) ⇒ g0.Path): g.Path = {
+	         (from: g.NodeT, to: g.NodeT, ancestorRouteMap: Map[(g0.NodeT, g0.NodeT), g0.Path]): g.Path = {
 		val path = g.newPathBuilder(from)(sizeHint = 64)
 		path.add(from)
 		// Step 1 Check if they are adjacent
@@ -32,9 +33,32 @@ object Routing {
 		val ancestPath: g.Path = commonAncestor match {
 			case None =>
 				// No common ancestor.
-				val g0Path = ancestorPath(from, to)
-				// Convert g0Copy.Path to our larger graph g.Path.
-				val gNodes = g0Path.nodes.map { g0Node =>
+				val node1Ancestors = from.label.last
+				val node2Ancestors = to.label.last
+				def g0Ancestors(ids: Set[Int]) = {
+					g0.nodes.filter { node ⇒
+						ids.contains(node.id)
+					}
+				}
+				val g0Ancestors1 = g0Ancestors(node1Ancestors)
+				val g0Ancestors2 = g0Ancestors(node2Ancestors)
+				assert(g0Ancestors1.size > 0, s"Label was: ${from.label}, ancestors: $g0Ancestors1")
+				assert(g0Ancestors2.size > 0, s"Label was: ${to.label}, ancestors: $g0Ancestors2")
+
+				// Get the minimum path
+				val paths = for(ancestor1 ← g0Ancestors1;
+				                ancestor2 ← g0Ancestors2) yield {
+					ancestorRouteMap.get((ancestor1, ancestor2)).map(_.nodes.toSeq)
+						// It could also be store in reverse in the Map.
+						.orElse(ancestorRouteMap.get((ancestor2, ancestor1)).map(_.nodes.toSeq.reverse))
+						.get
+				}
+				val g0Path = paths.minBy { path ⇒
+					path.size
+				}
+
+				// Convert g0.Path to our larger graph g.Path.
+				val gNodes = g0Path.map { g0Node =>
 					g.get(g0Node)
 				}
 				// Path is at most of length 3.
@@ -118,9 +142,11 @@ object Routing {
 		}
 	}
 
-	case class SphereRouter(g0: Sphere)(ancestorRouter: (g0.NodeT, g0.NodeT) ⇒ g0.Path) extends Router[Node] {
-		override def route(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
-			Routing.route(g = g, g0 = g0)(node1, node2, ancestorRouter)
+	def sphereRouter(g0: Sphere)(ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path]): Router[Node] = {
+		new Router[Node] {
+			override def route(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
+				Routing.route(g = g, g0 = g0)(node1, node2, ancestorMap)
+			}
 		}
 	}
 }

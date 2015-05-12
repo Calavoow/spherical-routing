@@ -1,7 +1,6 @@
 package instrumentation
 
 import graph.Util.Layered
-import graph.sphere.Routing.SphereRouter
 import graph.{Util, ring, sphere}
 
 import scala.collection.mutable
@@ -12,13 +11,13 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 import Util.Layered
 
 object Metric {
-	trait Router[T] {
-		def route(g: Graph[T,UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path
+	trait Router[N] {
+		def route(g: Graph[N, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path
 	}
 
-	def countShortestPaths[T : Layered](g: Graph[T, UnDiEdge]): Map[Int, Int] = {
-		val router = new Router[T] {
-			override def route(g: Graph[T, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
+	def countShortestPaths[N : Layered](g: Graph[N, UnDiEdge]): Map[Int, Int] = {
+		val router = new Router[N] {
+			override def route(g: Graph[N, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
 				node1.shortestPathTo(node2).get
 			}
 		}
@@ -26,9 +25,9 @@ object Metric {
 	}
 
 	def countRoutingPaths(g: Graph[sphere.Units.Node, UnDiEdge], g0: Graph[sphere.Units.Node, UnDiEdge])
-	                     (ancestorRouter: (g0.NodeT, g0.NodeT) => g0.Path): Map[Int, Int] = {
+	                     (ancestorRouteMap: Map[(g0.NodeT, g0.NodeT),g0.Path]): Map[Int, Int] = {
 		import sphere.Units.Node
-		countPaths(g)(SphereRouter(g0)(ancestorRouter))
+		countPaths(g)(sphere.Routing.sphereRouter(g0)(ancestorRouteMap))
 	}
 
 	def countPaths[T : Layered](g: Graph[T, UnDiEdge])(router: Router[T]) : Map[Int, Int] = {
