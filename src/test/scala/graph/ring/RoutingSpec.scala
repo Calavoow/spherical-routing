@@ -11,11 +11,13 @@ class RoutingSpec extends FlatSpec with Matchers {
 		for(subdivisions ← 1 to 7) {
 			println(s"subdivsion: $subdivisions")
 			val g = Units.ring(subdivisions)
+			val graphSize = g.nodes.size
 			g.nodes.toSeq.combinations(2).foreach {
 				case Seq(node1,node2) ⇒
 					val shortestPath = node1.shortestPathTo(node2).get
-					val routePath = Routing.route(g)(node1, node2)
-					assert(shortestPath.edges.size == routePath.edges.size, s"Shortestpath was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${routePath.nodes}")
+					val routePath = Routing.route(g, graphSize)(node1, node2)
+					assert(routePath.edges.size == shortestPath.edges.size,
+						s"Shortestpath did not equal the optimal path nodes ($node1, $node2).\n${shortestPath.nodes}\n${routePath.nodes}")
 			}
 		}
 	}

@@ -144,7 +144,7 @@ object Routing {
 
 	def sphereRouter(g0: Sphere)(ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path]): Router[Node] = {
 		new Router[Node] {
-			override def route(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
+			override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path = {
 				Routing.route(g = g, g0 = g0)(node1, node2, ancestorMap)
 			}
 		}
