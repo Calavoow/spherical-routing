@@ -89,13 +89,20 @@ object Routing {
 	 *         Then routing must occur on the lowest layer.
 	 */
 	def closestAncestor(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): Option[g.NodeT] = {
-		val firstNonEmptyIntersection = node1.label.view.map { entries1 =>
-			node2.label.view.map(_ intersect entries1).find(_.nonEmpty)
-		} find (_.isDefined) flatten
+		val allNode2IDs = node2.label.reduce(_ ++ _)
+		// Lazily get the first non-empty intersection
+		val firstNonEmptyIntersection = node1.label.view.map { set ⇒
+			allNode2IDs intersect set
+		}.find(_.nonEmpty)
 
-		firstNonEmptyIntersection.map { intersection =>
+		for(firstIntersection ← firstNonEmptyIntersection) yield {
+			// Get only those from the intersection which are closest to node2.
+			val closestIntersection = node2.label.view.map { set2 ⇒
+				set2 intersect firstIntersection
+			}.find(_.nonEmpty).get // There must be an intersection at some point.
+
 			// Pick a random ancestor, if there are two equidistant.
-			val id = Random.shuffle(intersection.toSeq).head
+			val id = Random.shuffle(closestIntersection.toSeq).head
 			// The ancestor must exist
 			g.nodes.find(_.id == id).get
 		}
