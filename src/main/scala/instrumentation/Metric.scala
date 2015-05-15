@@ -15,28 +15,36 @@ object Metric {
 		def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path
 	}
 
-	def countShortestPaths[N : Layered](g: Graph[N, UnDiEdge]): Map[Int, Int] = {
+	def countShortestPaths[N : Layered](g: Graph[N, UnDiEdge], nrLayers: Int): Map[Int, Int] = {
 		val router = new Router[N] {
 			override def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path = {
 				node1.shortestPathTo(node2).get
 			}
 		}
-		countPaths(g)(router)
+		countPaths(g, nrLayers)(router)
 	}
 
-	def countRoutingPaths(g: Graph[sphere.Units.Node, UnDiEdge], g0: Graph[sphere.Units.Node, UnDiEdge])
+	def countRoutingPaths(g: Graph[sphere.Units.Node, UnDiEdge], g0: Graph[sphere.Units.Node, UnDiEdge], nrLayers: Int)
 	                     (ancestorRouteMap: Map[(g0.NodeT, g0.NodeT),g0.Path]): Map[Int, Int] = {
-		countPaths(g)(sphere.Routing.sphereRouter(g0)(ancestorRouteMap))
+		countPaths(g, nrLayers)(sphere.Routing.sphereRouter(g0)(ancestorRouteMap))
 	}
 
-	def countPaths[T : Layered](g: Graph[T, UnDiEdge])(router: Router[T]) : Map[Int, Int] = {
+	/**
+	 * Count the number of paths that use a given layer.
+	 *
+	 * @param g
+	 * @param router The routing function to use for routing on the given Graph.
+	 * @tparam T
+	 * @return A map of Layer of edge -> nr of paths that used this edge.
+	 */
+	def countPaths[T : Layered](g: Graph[T, UnDiEdge], nrLayers: Int)(router: Router[T]) : Map[Int, Int] = {
 		def pathToLayers(path: g.Path) : Map[Int, Int] = {
 			// Cannot use edges, because they can occur twice in a path.
 			val layers = path.nodes.toIterator.sliding(2).map {
 				case Seq(node1, node2) =>
 					// The layer of the edge.
-					val layer1 = implicitly[Layered[T]].layer(node1)
-					val layer2 = implicitly[Layered[T]].layer(node2)
+					val layer1 = implicitly[Layered[T]].layer(node1, nrLayers)
+					val layer2 = implicitly[Layered[T]].layer(node2, nrLayers)
 					Math.max(layer1, layer2)
 			}
 			// Transform into Map(Layer -> Number of edges in that layer)
@@ -68,7 +76,7 @@ object Metric {
 		} reduce(sumMapByKey)
 	}
 
-	def randomCollisionCount[T : Layered](g: Graph[T, UnDiEdge], concurrentPaths: Int, samples: Int)(router: Router[T]) : Seq[Option[Int]] = {
+	def randomCollisionCount[T : Layered](g: Graph[T, UnDiEdge], nrLayers: Int, concurrentPaths: Int, samples: Int)(router: Router[T]) : Seq[Option[Int]] = {
 		val nodes = g.nodes.toVector
 		def randomDifNodes(random: Random) : Stream[g.NodeT] = {
 			Stream.continually(nodes(random.nextInt(nodes.size))).distinct
@@ -96,7 +104,7 @@ object Metric {
 			}
 			val collidingEdge = checkCollision._2
 			collidingEdge.map { e ⇒
-				Layered.edgeLayer[T](e.toOuter).layer(e.toOuter)
+				Layered.edgeLayer[T](e.toOuter).layer(e.toOuter, nrLayers)
 			}
 		}
 		// Reserialize

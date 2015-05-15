@@ -38,14 +38,14 @@ object Util {
 	}
 
 	trait Layered[T] {
-		def layer(a: T): Int
+		def layer(a: T, nrLayers: Int): Int
 	}
 	object Layered{
 		implicit def edgeLayer[T: Layered](edge : UnDiEdge[T]) : Layered[UnDiEdge[T]] = new Layered[UnDiEdge[T]] {
-			override def layer(e: UnDiEdge[T]) : Int = {
+			override def layer(e: UnDiEdge[T], nrLayers: Int) : Int = {
 				val Seq(node1, node2) = edge.nodeSeq
-				val layer1 = implicitly[Layered[T]].layer(node1)
-				val layer2 = implicitly[Layered[T]].layer(node2)
+				val layer1 = implicitly[Layered[T]].layer(node1, nrLayers)
+				val layer2 = implicitly[Layered[T]].layer(node2, nrLayers)
 				Math.min(layer1, layer2)
 			}
 		}

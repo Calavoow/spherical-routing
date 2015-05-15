@@ -84,7 +84,8 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 
 	"The labelling" should "have a maximum size of k+1 on the triangle" in {
 		val gs = SphereApproximation.repeatedSubdivision(Units.triangle)
-		gs.take(8).foreach { graph ⇒
+		gs.take(10).foreach { graph ⇒
+			println("Tesing next subdivision.")
 			graph.nodes.par.foreach{ node ⇒
 				node.label.zipWithIndex.foreach{ case (set, index) ⇒
 					assert(set.size <= index + 1, s"Node had label larger than ${index + 1}: $node")
@@ -95,7 +96,8 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 
 	it should "have a maximum size of k+1 on the icosahedron" in {
 		val gs = SphereApproximation.repeatedSubdivision(Units.icosahedron)
-		gs.take(6).foreach { graph ⇒
+		gs.take(8).foreach { graph ⇒
+			println("Tesing next subdivision.")
 			graph.nodes.par.foreach{ node ⇒
 				node.label.zipWithIndex.foreach{ case (set, index) ⇒
 					assert(set.size <= index + 1, s"Node had label larger than ${index + 1}: $node")

@@ -41,7 +41,7 @@ object Units {
 		}
 
 		implicit object LayeredLabel extends Layered[Label] {
-			def layer(x: Label) = x.layer
+			def layer(x: Label, nrLayers: Int) = nrLayers - x.layer
 		}
 	}
 

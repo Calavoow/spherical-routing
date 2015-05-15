@@ -48,23 +48,26 @@ object Main {
 		// Ring must have size at least 20, so drop 3 for size 32.
 		// Sphere must have size at least 20, so drop 1 for size 42
 		// Ring grows with 2^k, sphere with 4^k. So for each sphere, drop the second ring.
-		val graphs : Iterator[(Ring, Sphere)] = rings.drop(3).grouped(2).map(_.head).zip(spheres.drop(1))
+		val graphs : Iterator[((Ring, Int), (Sphere, Int))] = rings.zipWithIndex.drop(3)
+			.grouped(2).map(_.head) // Drop every second Ring
+			.zip(spheres.zipWithIndex.drop(1)) // Zip with the spheres, dropping the first.
 		try {
 			graphs.foreach {
-				case (ringG, sphereG) ⇒
+				case ((ringG, ringSubdivision), (sphereG, sphereSubdivisions)) ⇒
 					val ringNodes = ringG.nodes.size
 					val sphereNodes = sphereG.nodes.size
 					println(s"Next iteration, ring ($ringNodes), sphere ($sphereNodes})")
 					// Iterate through the number of concurrent paths.
 					(2 to 10).foreach { concurrentPaths ⇒
 						println(s"Concurrent paths: $concurrentPaths")
-						val ringCollisions = Metric.randomCollisionCount(g = ringG, concurrentPaths = concurrentPaths, samples)(ring.Routing)
+						val ringCollisions = Metric.randomCollisionCount(g = ringG, nrLayers = ringSubdivision,concurrentPaths = concurrentPaths, samples)(ring.Routing)
 							.map(_.getOrElse(-1))
 						// Probably faster to concat in memory (`samples` integers) and then write at once.
 						ringFile.write(s"$ringNodes,$concurrentPaths,${ringCollisions.mkString(",")}\n")
 						ringFile.flush()
 						val sphereCollisions = Metric
 							.randomCollisionCount(g = sphereG,
+								nrLayers = sphereSubdivisions,
 						        concurrentPaths = concurrentPaths,
 						        samples = samples) (sphere.Routing.sphereRouter(g0)(ancestorPathMap))
 							.map(_.getOrElse(-1))
