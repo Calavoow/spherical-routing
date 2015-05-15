@@ -52,8 +52,9 @@ object Main {
 		try {
 			graphs.foreach {
 				case (ringG, sphereG) ⇒
-					println(s"Next iteration, ring (${ringG.nodes.size}), sphere (${sphereG.nodes.size})")
 					val ringNodes = ringG.nodes.size
+					val sphereNodes = sphereG.nodes.size
+					println(s"Next iteration, ring ($ringNodes), sphere ($sphereNodes})")
 					// Iterate through the number of concurrent paths.
 					(2 to 10).foreach { concurrentPaths ⇒
 						println(s"Concurrent paths: $concurrentPaths")
@@ -67,7 +68,7 @@ object Main {
 						        concurrentPaths = concurrentPaths,
 						        samples = samples) (sphere.Routing.sphereRouter(g0)(ancestorPathMap))
 							.map(_.getOrElse(-1))
-						sphereFile.write(s"$ringNodes,$concurrentPaths,${sphereCollisions.mkString(",")}\n")
+						sphereFile.write(s"$sphereNodes,$concurrentPaths,${sphereCollisions.mkString(",")}\n")
 						sphereFile.flush()
 					}
 			}
