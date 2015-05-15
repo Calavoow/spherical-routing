@@ -16,12 +16,7 @@ object Metric {
 	}
 
 	def countShortestPaths[N : Layered](g: Graph[N, UnDiEdge], nrLayers: Int): Map[Int, Int] = {
-		val router = new Router[N] {
-			override def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path = {
-				node1.shortestPathTo(node2).get
-			}
-		}
-		countPaths(g, nrLayers)(router)
+		countPaths(g, nrLayers)(Util.ShortestPathRouter())
 	}
 
 	def countRoutingPaths(g: Graph[sphere.Units.Node, UnDiEdge], g0: Graph[sphere.Units.Node, UnDiEdge], nrLayers: Int)

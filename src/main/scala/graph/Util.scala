@@ -2,6 +2,7 @@ package graph
 
 import graph.sphere.Units
 import Units._
+import instrumentation.Metric.Router
 
 import scala.annotation.tailrec
 import scala.language.{higherKinds,implicitConversions}
@@ -48,6 +49,18 @@ object Util {
 				val layer2 = implicitly[Layered[T]].layer(node2, nrLayers)
 				Math.min(layer1, layer2)
 			}
+		}
+	}
+
+	/**
+	 * A router that uses the shortestPathTo method of the Graph library.
+	 *
+	 * An object implementation is not possible (i.e. with Router[Nothing]), because in Graph[N,E], N is invariant.
+	 * @tparam N The node type
+	 */
+	case class ShortestPathRouter[N]() extends Router[N] {
+		override def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path = {
+			node1.shortestPathTo(node2).get
 		}
 	}
 

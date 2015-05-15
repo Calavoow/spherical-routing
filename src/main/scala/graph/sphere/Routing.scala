@@ -90,11 +90,11 @@ object Routing {
 	 */
 	def closestAncestor(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): Option[g.NodeT] = {
 		// Find the first label entries in node1 which also occur in node2's label.
-		val firstNonEmptyIntersection = node1.label.view.map { entries1 =>
+		val intersection = node1.label.view.map { entries1 =>
 			node2.label.view.map(_ intersect entries1).find(_.nonEmpty)
 		} find (_.isDefined) flatten
 
-		for(firstIntersection ← firstNonEmptyIntersection) yield {
+		for(firstIntersection ← intersection) yield {
 			// Pick a random ancestor, if there are two equidistant.
 			val id = Random.shuffle(firstIntersection.toSeq).head
 			// The ancestor must exist

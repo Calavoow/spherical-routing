@@ -27,10 +27,6 @@ object Units {
 			val unfilteredLabel = parent1.label.zip(parent2.label).toIndexedSeq.map {
 				case (l1, l2) =>
 					l1 union l2
-					// Remove parent ids that have already occurred in the label (at position 1)
-					// This will prevent a tree to be added twice.
-//					if(index > 0) union -- Set(parent1.id, parent2.id)
-//					else union
 			}
 			// Calculate all previous elements that have occurred at each index.
 			val prefixUnion = unfilteredLabel.scanLeft(Set[Int]())(_ union _)

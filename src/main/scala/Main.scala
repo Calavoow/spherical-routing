@@ -24,7 +24,7 @@ object Main {
 				return
 			}
 		} else {
-			println(s"No output files given.")
+			println(s"No output files given. Usage `executable [ring output] [sphere output]`")
 			return
 		}
 		// Write headers to files.
@@ -51,6 +51,7 @@ object Main {
 		val graphs : Iterator[((Ring, Int), (Sphere, Int))] = rings.zipWithIndex.drop(3)
 			.grouped(2).map(_.head) // Drop every second Ring
 			.zip(spheres.zipWithIndex.drop(1)) // Zip with the spheres, dropping the first.
+//			.drop(7) // Drop the first couple for profiling.
 		try {
 			graphs.foreach {
 				case ((ringG, ringSubdivision), (sphereG, sphereSubdivisions)) ⇒
@@ -81,9 +82,6 @@ object Main {
 		}
 	}
 
-	def getNode(g: Graph[sphere.Units.Node, UnDiEdge], id: Int) : g.NodeT = {
-		g.nodes.find(_.id == id).get
-	}
 	/*
 	def instrumentPathCount(g: Graph[sphere.Units.Node ,UnDiEdge], iterateSubdivs: Iterator[Graph[sphere.Units.Node, UnDiEdge]]) = {
 		val pathsPerLayerRouting = iterateSubdivs.map { graph ⇒
