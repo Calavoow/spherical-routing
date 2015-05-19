@@ -62,6 +62,6 @@ object Units {
 
 
 	implicit object LayeredNode extends Layered[Node] {
-		override def layer(a: Node): Int = p(a)
+		override def layer(a: Node, nrLayers: Int): Int = p(a)
 	}
 }

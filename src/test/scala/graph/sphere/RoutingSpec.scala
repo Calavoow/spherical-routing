@@ -13,7 +13,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 	"Labelroute" should "route from a child to a parent" in {
 		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
 		val child = g.nodes.find(_.id == 18).get
-		val parent = g.nodes.find(_.id == 1).get
+		val parent = g.nodes.find(_.id == 2).get
 		val path = Routing.labelRoute(g)(child = child, parent = parent)
 		assert(path.nodes.size == 3, s"Path was different than expected.\n $path")
 	}
@@ -29,7 +29,8 @@ class RoutingSpec extends FlatSpec with Matchers {
 		)
 
 		val pathMap = Util.allShortestPaths(g)
-		val route = Routing.route(g,g)(g.get(Label(1)), g.get(Label(5)), pathMap)
+		val router = Routing.sphereRouter(g)(pathMap)
+		val route = router.route(g, g.nodes.size)(g.get(Label(1)), g.get(Label(5)))
 
 		route.nodes.toList should be(List(Label(1), Label(5)))
 		route.edges.toList should be(List(Label(1) ~ Label(5)))
@@ -46,7 +47,8 @@ class RoutingSpec extends FlatSpec with Matchers {
 		)
 
 		val pathMap = Util.allShortestPaths(g)
-		val route = Routing.route(g,g)(g.get(Label(1)), g.get(Label(4)), pathMap)
+		val router = Routing.sphereRouter(g)(pathMap)
+		val route = router.route(g, g.nodes.size)(g.get(Label(1)), g.get(Label(5)))
 
 		route.nodes.toList should (equal (List(Label(1), Label(3), Label(4)))
 			or equal (List(Label(1), Label(2), Label(4))))
@@ -56,13 +58,14 @@ class RoutingSpec extends FlatSpec with Matchers {
 
 	it should "find the same path 100 times" in {
 		val pathMap = Util.allShortestPaths(triangle)
+		val router = Routing.sphereRouter(triangle)(pathMap)
 		val paths = for(_ <- 1 to 100) yield {
 			val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
 
 			val node1 = g.nodes.find(_.id == 29).get
 			val node2 = g.nodes.find(_.id == 16).get
 			val shortestPath = node1.shortestPathTo(node2).get
-			val route = Routing.route(g, triangle)(node1, node2, pathMap)
+			val route = router.route(g, g.nodes.size)(node1, node2)
 			(shortestPath, route)
 		}
 
@@ -87,13 +90,15 @@ class RoutingSpec extends FlatSpec with Matchers {
 	it should "find an m+1 path on the face upto 8 division with random sampling" in {
 		val graphs = SphereApproximation.repeatedSubdivision(triangle)
 		val pathMap = Util.allShortestPaths(triangle)
+		val router = Routing.sphereRouter(triangle)(pathMap)
 		Random.setSeed(System.currentTimeMillis())
 		graphs.drop(5).take(3).foreach { g =>
+			val nrNodes = g.nodes.size
 			Random.shuffle(g.nodes.toSeq.combinations(2)).take(1000).foreach {
 				case Seq(node1, node2) =>
 					val shortestPath = node1.shortestPathTo(node2).get
-					val route = Routing.route(g, triangle)(node1, node2, pathMap)
-					assert(shortestPath.nodes.size + 1 >= route.nodes.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+					val route = router.route(g, nrNodes)(node1, node2)
+					assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
 			}
 		}
 	}
@@ -101,11 +106,13 @@ class RoutingSpec extends FlatSpec with Matchers {
 	def atMostM1Path(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
 		val combinations = Util.binomCoef(BigInt(g.nodes.size), BigInt(2))
 		val ancestorPathMap = Util.allShortestPaths(g0)
+		val router = Routing.sphereRouter(g0)(ancestorPathMap)
 		var counter = 0L
+		val nrNodes = g.nodes.size
 		g.nodes.toSeq.combinations(2).foreach {
 			case Seq(node1, node2) =>
 				val shortestPath = node1.shortestPathTo(node2).get
-				val route = Routing.route(g, g0)(node1, node2, ancestorPathMap)
+				val route = router.route(g, nrNodes)(node1, node2)
 				assert(route.nodes.head == node1)
 				assert(route.nodes.last == node2)
 				assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")

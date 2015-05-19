@@ -9,3 +9,9 @@ libraryDependencies ++= Seq(
 )
 
 scalacOptions ++= Seq("-feature")
+
+fork in run := true
+
+connectInput in run := true
+
+javaOptions in run += "-Xmx7168m"

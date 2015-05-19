@@ -11,7 +11,7 @@ import Units._
 import graph.Util.TwoPower
 
 object Routing extends Router[Node] {
-	override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(from: g.NodeT, to: g.NodeT) : g.Path = {
+		override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(from: g.NodeT, to: g.NodeT) : g.Path = {
 		Random.setSeed(System.currentTimeMillis())
 		/**
 		 * Recursively fill the steps towards a common node.
@@ -32,8 +32,8 @@ object Routing extends Router[Node] {
 					val randomNode = Random.shuffle(commonNeighbours.toSeq).head
 					recursion(randomNode :: as, bs, i+1)
 				} else {
-					val aNext = step(g)(as.head, i, graphSize)
-					val bNext = step(g)(bs.head, i, graphSize)
+					val aNext = step(g, graphSize)(as.head, i)
+					val bNext = step(g, graphSize)(bs.head, i)
 					recursion(aNext :: as, bNext :: bs, i+1)
 				}
 			}
@@ -48,17 +48,17 @@ object Routing extends Router[Node] {
 	}
 
 
-	private def step(g : Graph[Node, UnDiEdge])(head: g.NodeT, iteration: Int, graphSize: Int) : g.NodeT = {
+	private def step(g : Graph[Node, UnDiEdge], n: Int)(head: g.NodeT, iteration: Int) : g.NodeT = {
 		val twoIMinusOne = (iteration-1).twoPowerOf
 		// Explicitly get Int values, needed to perform Integer addition and not String concatenation.
 		val headIndex : Int = head
 		if(head % iteration.twoPowerOf == 0) {
 			head
 		} else if (p(headIndex + twoIMinusOne) > p(headIndex - twoIMinusOne)) {
-			val node = (((headIndex + twoIMinusOne) % graphSize) + graphSize) % graphSize
+			val node = (((headIndex + twoIMinusOne) % n) + n) % n
 			g.get(node)
 		} else {
-			val node = (((headIndex - twoIMinusOne) % graphSize) + graphSize) % graphSize
+			val node = (((headIndex - twoIMinusOne) % n) + n) % n
 			g.get(node)
 		}
 	}
