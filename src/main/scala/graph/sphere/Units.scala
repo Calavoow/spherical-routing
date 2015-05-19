@@ -1,6 +1,6 @@
 package graph.sphere
 
-import graph.Util.Layered
+import graph.Util.{ID, Layered}
 
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
@@ -38,6 +38,9 @@ object Units {
 
 		implicit object LayeredLabel extends Layered[Label] {
 			def layer(x: Label, nrLayers: Int) = nrLayers - x.layer
+		}
+		implicit object IdLabel extends ID[Label] {
+			override def id(x: Label) : Int = x.id
 		}
 	}
 

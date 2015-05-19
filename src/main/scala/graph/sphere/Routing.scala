@@ -21,14 +21,14 @@ object Routing {
 	 * @return The route.
 	 */
 	def route(g: Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge])
-	         (from: g.NodeT, to: g.NodeT, ancestorRouteMap: Map[(g0.NodeT, g0.NodeT), g0.Path]): g.Path = {
+	         (from: g.NodeT, to: g.NodeT, ancestorRouteMap: Map[(g0.NodeT, g0.NodeT), g0.Path], nodeMap: IndexedSeq[g.NodeT]): g.Path = {
 		val path = g.newPathBuilder(from)(sizeHint = 64)
 		path.add(from)
 		// Step 1 Check if they are adjacent
 		if( path.add(to) ) return path.result()
 
 		// Try to find a common ancestor.
-		val commonAncestor = closestAncestor(g)(from, to)
+		val commonAncestor = closestAncestor(g)(from, to, nodeMap)
 		// If there is no common ancestor, we need to route on the lowest layer. Otherwise we are already done.
 		val ancestPath: g.Path = commonAncestor match {
 			case None =>
@@ -88,7 +88,7 @@ object Routing {
 	 * @return The common ancestor. Could be None if there is no common ancestor in the label.
 	 *         Then routing must occur on the lowest layer.
 	 */
-	def closestAncestor(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): Option[g.NodeT] = {
+	def closestAncestor(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): Option[g.NodeT] = {
 		// Find the first label entries in node1 which also occur in node2's label.
 		val intersection = node1.label.view.map { entries1 =>
 			node2.label.view.map(_ intersect entries1).find(_.nonEmpty)
@@ -98,7 +98,7 @@ object Routing {
 			// Pick a random ancestor, if there are two equidistant.
 			val id = Random.shuffle(firstIntersection.toSeq).head
 			// The ancestor must exist
-			g.nodes.find(_.id == id).get
+			nodeMap(id)
 		}
 	}
 
@@ -145,8 +145,8 @@ object Routing {
 
 	def sphereRouter(g0: Sphere)(ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path]): Router[Node] = {
 		new Router[Node] {
-			override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path = {
-				Routing.route(g = g, g0 = g0)(node1, node2, ancestorMap)
+			override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path = {
+				Routing.route(g = g, g0 = g0)(node1, node2, ancestorMap, nodeMap)
 			}
 		}
 	}

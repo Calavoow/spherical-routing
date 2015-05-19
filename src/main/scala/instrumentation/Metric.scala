@@ -12,7 +12,7 @@ import Util.Layered
 
 object Metric {
 	trait Router[N] {
-		def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path
+		def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path
 	}
 
 	def countShortestPaths[N : Layered](g: Graph[N, UnDiEdge], nrLayers: Int): Map[Int, Int] = {

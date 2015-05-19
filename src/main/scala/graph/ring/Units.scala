@@ -5,7 +5,7 @@ import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
 
-import graph.Util.{Layered, TwoPower}
+import graph.Util.{ID, Layered, TwoPower}
 
 import scala.language.postfixOps
 
@@ -63,5 +63,9 @@ object Units {
 
 	implicit object LayeredNode extends Layered[Node] {
 		override def layer(a: Node, nrLayers: Int): Int = p(a)
+	}
+
+	implicit object IdNode extends ID[Node] {
+		override def id(a: Node) : Int = a
 	}
 }

@@ -5,6 +5,7 @@ import Units._
 import instrumentation.Metric.Router
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.language.{higherKinds,implicitConversions}
 import scalax.collection.GraphEdge.UnDiEdge
 import scalax.collection.GraphPredef._
@@ -49,6 +50,20 @@ object Util {
 				val layer2 = implicitly[Layered[T]].layer(node2, nrLayers)
 				Math.min(layer1, layer2)
 			}
+		}
+	}
+
+	trait ID[T] {
+		def id(a: T): Int
+	}
+	def toNodeMap[T: ID](ids: Traversable[T]) : IndexedSeq[T] = {
+		val nrIds = ids.map { element ⇒
+			implicitly[ID[T]].id(element)
+		}.max
+		val idMap = new Array[T](nrIds)
+		ids.foreach { element ⇒
+			val id = implicitly[ID[T]].id(element)
+			idMap(id) = element
 		}
 	}
 
