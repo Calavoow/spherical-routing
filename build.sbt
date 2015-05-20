@@ -15,3 +15,5 @@ fork in run := true
 connectInput in run := true
 
 javaOptions in run += "-Xmx7168m"
+
+javaOptions in run += "-Xms4096m"

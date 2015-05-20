@@ -64,6 +64,15 @@ object Units {
 		override def toString = {
 			"[" + label.map(_.mkString("{", ",", "}")).mkString(",") + "]_" + layer
 		}
+
+		override def hashCode : Int = {
+			id.hashCode()
+		}
+
+		override def equals(other: Any): Boolean = other match {
+			case that : Label => that.id == id
+			case _ => false
+		}
 	}
 
 	type Node = Label
@@ -111,8 +120,8 @@ object Units {
 	 * The triangle encoded as a graph object.
 	 */
 	val triangle = Graph[Node, UnDiEdge](
+		Label(0) ~ Label(1),
 		Label(1) ~ Label(2),
-		Label(2) ~ Label(3),
-		Label(3) ~ Label(1)
+		Label(2) ~ Label(0)
 	)
 }

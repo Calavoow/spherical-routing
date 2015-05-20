@@ -1,6 +1,7 @@
 import java.io.{FileWriter, PrintWriter}
 
-import graph.ring.Units.{Ring,LayeredNode}
+import graph.Util.ID
+import graph.ring.Units.{Ring, LayeredNode, IdNode}
 import graph.sphere.Units.Sphere
 import graph.sphere.Units.Label.LayeredLabel
 import graph.{Util, Dot, sphere, ring}
@@ -38,6 +39,7 @@ object Main {
 
 
 		val rings : Iterator[Ring] = Iterator.from(0).map { i ⇒
+			println("Subdividing ring")
 			ring.Units.ring(i)
 //			writeToFile(s"ring_$counter.dot", Dot.toDot(subdiv))
 //			counter += 1

@@ -6,6 +6,7 @@ import instrumentation.Metric.Router
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.language.{higherKinds,implicitConversions}
 import scalax.collection.GraphEdge.UnDiEdge
 import scalax.collection.GraphPredef._
@@ -55,17 +56,21 @@ object Util {
 
 	trait ID[T] {
 		def id(a: T): Int
+
 	}
-	def toNodeMap[T: ID](ids: Traversable[T]) : IndexedSeq[T] = {
+
+	def toIdSeq[T: ID](ids: Traversable[T]) : IndexedSeq[T] = {
 		val nrIds = ids.map { element ⇒
 			implicitly[ID[T]].id(element)
 		}.max
-		val idMap = new Array[T](nrIds)
+		val idMap = new ArrayBuffer[T](nrIds)
 		ids.foreach { element ⇒
 			val id = implicitly[ID[T]].id(element)
 			idMap(id) = element
 		}
+		idMap
 	}
+
 
 	/**
 	 * A router that uses the shortestPathTo method of the Graph library.
@@ -74,7 +79,7 @@ object Util {
 	 * @tparam N The node type
 	 */
 	case class ShortestPathRouter[N]() extends Router[N] {
-		override def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT): g.Path = {
+		override def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path = {
 			node1.shortestPathTo(node2).get
 		}
 	}

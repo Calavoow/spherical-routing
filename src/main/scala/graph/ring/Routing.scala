@@ -11,7 +11,7 @@ import Units._
 import graph.Util.TwoPower
 
 object Routing extends Router[Node] {
-		override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(from: g.NodeT, to: g.NodeT) : g.Path = {
+		override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(from: g.NodeT, to: g.NodeT, nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
 		Random.setSeed(System.currentTimeMillis())
 		/**
 		 * Recursively fill the steps towards a common node.

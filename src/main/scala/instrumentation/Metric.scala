@@ -1,6 +1,6 @@
 package instrumentation
 
-import graph.Util.Layered
+import graph.Util.{ID, Layered}
 import graph.{Util, ring, sphere}
 
 import scala.collection.mutable
@@ -8,14 +8,13 @@ import scala.concurrent.forkjoin.ThreadLocalRandom
 import scala.util.Random
 import scalax.collection.immutable.Graph
 import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
-import Util.Layered
 
 object Metric {
 	trait Router[N] {
 		def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path
 	}
 
-	def countShortestPaths[N : Layered](g: Graph[N, UnDiEdge], nrLayers: Int): Map[Int, Int] = {
+	def countShortestPaths[N : Layered : ID](g: Graph[N, UnDiEdge], nrLayers: Int): Map[Int, Int] = {
 		countPaths(g, nrLayers)(Util.ShortestPathRouter())
 	}
 
@@ -32,7 +31,7 @@ object Metric {
 	 * @tparam T
 	 * @return A map of Layer of edge -> nr of paths that used this edge.
 	 */
-	def countPaths[T : Layered](g: Graph[T, UnDiEdge], nrLayers: Int)(router: Router[T]) : Map[Int, Int] = {
+	def countPaths[T : Layered : ID](g: Graph[T, UnDiEdge], nrLayers: Int)(router: Router[T]) : Map[Int, Int] = {
 		def pathToLayers(path: g.Path) : Map[Int, Int] = {
 			// Cannot use edges, because they can occur twice in a path.
 			val layers = path.nodes.toIterator.sliding(2).map {
@@ -54,24 +53,26 @@ object Metric {
 
 		// Cache graphSize because it's O(n)
 		val graphSize = g.nodes.size
+		// Create a nodeMap because looking up the ID is also O(n)
+		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[T]].id(node))
 
 		// Split into smaller computation groups, and reduce them individually.
 		// To prevent memory issues.
 		val combinationGroups = g.nodes.toSeq.combinations(2).grouped(50000)
 		combinationGroups.map { group ⇒
 			// Map the group in parallel.
-			group.par.map({
+			group.par.map{
 				case Seq(node1, node2) =>
-					router.route(g, graphSize)(node1, node2)
-			})
+					router.route(g, graphSize)(node1, node2, nodeMap)
+			}
 				// Transform the path to a map of layer nr and count.
-				.map(pathToLayers)
+				.map(pathToLayers _)
 				// Reduce the map of keys to save memory size.
 				.reduce(sumMapByKey)
-		} reduce(sumMapByKey)
+		}.reduce(sumMapByKey _)
 	}
 
-	def randomCollisionCount[T : Layered](g: Graph[T, UnDiEdge], nrLayers: Int, concurrentPaths: Int, samples: Int)(router: Router[T]) : Seq[Option[Int]] = {
+	def randomCollisionCount[T : Layered : ID](g: Graph[T, UnDiEdge], nrLayers: Int, concurrentPaths: Int, samples: Int)(router: Router[T]) : Seq[Option[Int]] = {
 		val nodes = g.nodes.toVector
 		def randomDifNodes(random: Random) : Stream[g.NodeT] = {
 			Stream.continually(nodes(random.nextInt(nodes.size))).distinct
@@ -82,6 +83,9 @@ object Metric {
 			path2.edges.find(edges1)
 		}
 
+		// Create a nodeMap because looking up the ID is O(n)
+		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[T]].id(node))
+
 		Random.setSeed(System.currentTimeMillis())
 		// Parallellize sampling!
 		val sampled = (0 to samples).par.map { _ ⇒
@@ -89,7 +93,7 @@ object Metric {
 			// Draw `concurrentPaths`*2 distinct nodes, and calculate paths.
 			val nodes = randomDifNodes(threadLocalRandom).take(2*concurrentPaths)
 			val routes = nodes.grouped(2).map {
-				case Seq(node1, node2) ⇒ router.route(g, nodes.size)(node1, node2)
+				case Seq(node1, node2) ⇒ router.route(g, nodes.size)(node1, node2, nodeMap)
 			}
 			// Check if any two paths collide.
 			val checkCollision = routes.foldLeft[(Set[g.EdgeT], Option[g.EdgeT])]((Set.empty, None)) {

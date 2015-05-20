@@ -1,5 +1,6 @@
 package graph.sphere
 
+import scala.collection.mutable
 import scalax.collection.GraphEdge._
 import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
