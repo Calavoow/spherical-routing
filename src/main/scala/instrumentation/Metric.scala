@@ -78,11 +78,6 @@ object Metric {
 			Stream.continually(nodes(random.nextInt(nodes.size))).distinct
 		}
 
-		def pathsCollide(path1: g.Path, path2: g.Path) : Option[g.EdgeT] = {
-			val edges1 = path1.edges.toSet
-			path2.edges.find(edges1)
-		}
-
 		// Create a nodeMap because looking up the ID is O(n)
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[T]].id(node))
 
@@ -96,17 +91,21 @@ object Metric {
 				case Seq(node1, node2) ⇒ router.route(g, nodes.size)(node1, node2, nodeMap)
 			}
 			// Check if any two paths collide.
-			val checkCollision = routes.foldLeft[(Set[g.EdgeT], Option[g.EdgeT])]((Set.empty, None)) {
-				case ((previousEdges, collision), path) ⇒
-					val collidingEdge = collision.orElse(path.edges.find(previousEdges))
-					(previousEdges ++ path.edges, collidingEdge)
-			}
-			val collidingEdge = checkCollision._2
+			val collidingEdge = collisionEdge(g)(routes)
 			collidingEdge.map { e ⇒
 				Layered.edgeLayer[T](e.toOuter).layer(e.toOuter, nrLayers)
 			}
 		}
 		// Reserialize
 		sampled.seq
+	}
+
+	def collisionEdge[T](g: Graph[T, UnDiEdge])(paths: TraversableOnce[g.Path]) : Option[g.EdgeT] = {
+		val checkCollision = paths.foldLeft[(Set[g.EdgeT], Option[g.EdgeT])]((Set.empty, None)) {
+			case ((previousEdges, collision), path) ⇒
+				val collidingEdge = collision.orElse(path.edges.find(previousEdges))
+				(previousEdges ++ path.edges, collidingEdge)
+		}
+		checkCollision._2
 	}
 }

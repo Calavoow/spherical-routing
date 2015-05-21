@@ -1,5 +1,9 @@
 name := "Spherical Routing"
 
+version := "0.5"
+
+organization := "eu.calavoow"
+
 scalaVersion := "2.11.6"
 
 libraryDependencies ++= Seq(
@@ -17,3 +21,5 @@ connectInput in run := true
 javaOptions in run += "-Xmx7168m"
 
 javaOptions in run += "-Xms4096m"
+
+test in assembly := {}

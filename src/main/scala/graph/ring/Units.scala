@@ -13,7 +13,14 @@ object Units {
 	type Node = Int
 	type Ring = Graph[Node, UnDiEdge]
 
-	def ring(subdivisions: Int) : Graph[Node, UnDiEdge]= {
+	/**
+	 * Make a ring of the given number of subdivisions.
+	 *
+	 * The total number of nodes will be 4*2^`subdivisions`^
+	 * @param subdivisions The number of times to subdivide.
+	 * @return The ring
+	 */
+	def ring(subdivisions: Int) : Ring = {
 		// Assume that the nr of nodes fits in an Int.
 		// (Some collections dont support more than Int.MaxValue elements anyway.)
 		val nrNodes = 4 * subdivisions.twoPowerOf
@@ -24,7 +31,7 @@ object Units {
 		 *
 		 * @param nodes A sequence of nodes.
 		 * @return The edges that form a ring.
-		 */
+		 **/
 		def sequentialEdges(nodes: Seq[Node]) : Seq[UnDiEdge[Node]] = {
 			(nodes :+ nodes.head).sliding(2).map {
 				case Seq(n1, n2) ⇒ n1 ~ n2
@@ -62,7 +69,11 @@ object Units {
 
 
 	implicit object LayeredNode extends Layered[Node] {
-		override def layer(a: Node, nrLayers: Int): Int = p(a)
+		override def layer(a: Node, nrLayers: Int): Int = {
+			// Limit the layer number by nrLayers, for the highest layer edge.
+			// Or else it may result in a layer higher than nrLayers-1.
+			p(a).min(nrLayers - 1)
+		}
 	}
 
 	implicit object IdNode extends ID[Node] {
