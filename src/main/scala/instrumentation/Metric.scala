@@ -87,14 +87,18 @@ object Metric {
 			val threadLocalRandom = ThreadLocalRandom.current()
 			// Draw `concurrentPaths`*2 distinct nodes, and calculate paths.
 			val nodes = randomDifNodes(threadLocalRandom).take(2*concurrentPaths)
-			val routes = nodes.grouped(2).map {
-				case Seq(node1, node2) ⇒ router.route(g, nodes.size)(node1, node2, nodeMap)
+			val nodeSeq = nodes.toIndexedSeq
+			val routes = nodeSeq.grouped(2).map {
+				case Seq(node1, node2) ⇒ router.route(g, nodeSeq.size)(node1, node2, nodeMap)
 			}
+			val routeSeq = routes.toIndexedSeq
 			// Check if any two paths collide.
-			val collidingEdge = collisionEdge(g)(routes)
-			collidingEdge.map { e ⇒
+			val collidingEdge = collisionEdge(g)(routeSeq)
+			val layer = collidingEdge.map { e ⇒
 				Layered.edgeLayer[T](e.toOuter).layer(e.toOuter, nrLayers)
 			}
+			assert(layer != Some(0), "Colliding edge: " + collidingEdge + "\nAll paths: " + routeSeq + "\nGraph: " + g)
+			layer
 		}
 		// Reserialize
 		sampled.seq

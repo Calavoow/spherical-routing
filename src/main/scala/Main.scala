@@ -55,21 +55,24 @@ object Main {
 //			.drop(7) // Drop the first couple for profiling.
 		try {
 			graphs.foreach {
-				case ((ringG, ringSubdivision), (sphereG, sphereSubdivisions)) ⇒
+				case ((ringG, ringIterations), (sphereG, sphereIterations)) ⇒
 					val ringNodes = ringG.nodes.size
 					val sphereNodes = sphereG.nodes.size
 					println(s"Next iteration, ring ($ringNodes), sphere ($sphereNodes})")
 					// Iterate through the number of concurrent paths.
 					(2 to 10).foreach { concurrentPaths ⇒
 						println(s"Concurrent paths: $concurrentPaths")
-						val ringCollisions = Metric.randomCollisionCount(g = ringG, nrLayers = ringSubdivision,concurrentPaths = concurrentPaths, samples)(ring.Routing)
+						val ringCollisions = Metric.randomCollisionCount(g = ringG,
+								nrLayers = ringIterations + 1,
+								concurrentPaths = concurrentPaths,
+								samples = samples) (ring.Routing)
 							.map(_.getOrElse(-1))
 						// Probably faster to concat in memory (`samples` integers) and then write at once.
 						ringFile.write(s"$ringNodes,$concurrentPaths,${ringCollisions.mkString(",")}\n")
 						ringFile.flush()
 						val sphereCollisions = Metric
 							.randomCollisionCount(g = sphereG,
-								nrLayers = sphereSubdivisions,
+								nrLayers = sphereIterations + 1,
 						        concurrentPaths = concurrentPaths,
 						        samples = samples) (sphere.Routing.sphereRouter(g0)(ancestorPathMap))
 							.map(_.getOrElse(-1))

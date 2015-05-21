@@ -41,6 +41,13 @@ object Util {
 	}
 
 	trait Layered[T] {
+		/**
+		 * The layer should be the number of swaps necessary to create this edge.
+		 *
+		 * @param a
+		 * @param nrLayers
+		 * @return
+		 */
 		def layer(a: T, nrLayers: Int): Int
 	}
 	object Layered{

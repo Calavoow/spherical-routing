@@ -70,9 +70,7 @@ object Units {
 
 	implicit object LayeredNode extends Layered[Node] {
 		override def layer(a: Node, nrLayers: Int): Int = {
-			// Limit the layer number by nrLayers, for the highest layer edge.
-			// Or else it may result in a layer higher than nrLayers-1.
-			p(a).min(nrLayers - 1)
+			p(a)
 		}
 	}
 
