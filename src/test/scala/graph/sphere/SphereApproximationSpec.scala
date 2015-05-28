@@ -12,7 +12,7 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 	"Triangles" should "be correctly found in a triangular graph" in {
 		val g = Units.triangle
 		triangles(g) should equal(Set(
-			Set(Label(1), Label(3), Label(2))
+			Set(Label(0), Label(2), Label(1))
 		))
 	}
 
@@ -33,17 +33,17 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		)
 	}
 
-	"Subdivison" should "subdivide a triangle" in {
+	"Subdivision" should "subdivide a triangle" in {
 		val g = Units.triangle
 		val g1 = SphereApproximation.subdivide(g)
 		g1.nodes.size should equal(6)
 		g1.edges.size should equal(12)
+		g1.nodes should contain( Label(0) )
 		g1.nodes should contain( Label(1) )
 		g1.nodes should contain( Label(2) )
-		g1.nodes should contain( Label(3) )
+		g1.nodes.find(_.label.last == Set(0,1)) should be('defined)
 		g1.nodes.find(_.label.last == Set(1,2)) should be('defined)
-		g1.nodes.find(_.label.last == Set(2,3)) should be('defined)
-		g1.nodes.find(_.label.last == Set(1,3)) should be('defined)
+		g1.nodes.find(_.label.last == Set(0,2)) should be('defined)
 	}
 
 	it should "always divide in the same way" in {
@@ -85,7 +85,7 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 	"The labelling" should "have a maximum size of k+1 on the triangle" in {
 		val gs = SphereApproximation.repeatedSubdivision(Units.triangle)
 		gs.take(10).foreach { graph ⇒
-			println("Tesing next subdivision.")
+			println("Testing next subdivision.")
 			graph.nodes.par.foreach{ node ⇒
 				node.label.zipWithIndex.foreach{ case (set, index) ⇒
 					assert(set.size <= index + 1, s"Node had label larger than ${index + 1}: $node")
