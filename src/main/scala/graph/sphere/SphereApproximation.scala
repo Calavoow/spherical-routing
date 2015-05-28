@@ -25,6 +25,7 @@ object SphereApproximation {
 	 */
 	def repeatedSubdivision(g: Graph[Node, UnDiEdge]): Iterator[Graph[Node, UnDiEdge]] = {
 		Iterator.iterate(g) { graph =>
+			println("Subdividing sphere")
 			subdivide(graph)
 		}
 	}

@@ -106,11 +106,9 @@ object Metric {
 			val routeSeq = routes.toIndexedSeq
 			// Check if any two paths collide.
 			val collidingEdge = collisionEdge(g)(routeSeq)
-			val layer = collidingEdge.map { e ⇒
+			collidingEdge.map { e ⇒
 				Layered.edgeLayer[T](e.toOuter).layer(e.toOuter, nrLayers)
 			}
-			assert(layer != Some(0), "Colliding edge: " + collidingEdge + "\nAll paths: " + routeSeq + "\nGraph: " + g)
-			layer
 		}
 		// Reserialize
 		sampled.seq
