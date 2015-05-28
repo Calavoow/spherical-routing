@@ -26,9 +26,9 @@ object Metric {
 	/**
 	 * Count the number of paths that use a given layer.
 	 *
-	 * @param g
+	 * @param g The graph to count paths on.
 	 * @param router The routing function to use for routing on the given Graph.
-	 * @tparam T
+	 * @tparam T The node type.
 	 * @return A map of Layer of edge -> nr of paths that used this edge.
 	 */
 	def countPaths[T : Layered : ID](g: Graph[T, UnDiEdge], nrLayers: Int)(router: Router[T]) : Map[Int, Int] = {
@@ -72,6 +72,18 @@ object Metric {
 		}.reduce(sumMapByKey _)
 	}
 
+	/**
+	 * Count the number of collisions between a given number of concurrent paths.
+	 *
+	 * Paths are randomly sampled from all nodes. Any two paths will have distinct endpoints.
+	 * @param g The graph to sample from.
+	 * @param nrLayers The number of layers that graph has.
+	 * @param concurrentPaths The number of concurrent paths to sample.
+	 * @param samples The number of random samples to take.
+	 * @param router The Router to use to find a path between two endpoints.
+	 * @tparam T The node type
+	 * @return A sequence of the layer in which a collision occurred, if any.
+	 */
 	def randomCollisionCount[T : Layered : ID](g: Graph[T, UnDiEdge], nrLayers: Int, concurrentPaths: Int, samples: Int)(router: Router[T]) : Seq[Option[Int]] = {
 		val nodes = g.nodes.toVector
 		def randomDifNodes(random: Random) : Stream[g.NodeT] = {
@@ -104,6 +116,14 @@ object Metric {
 		sampled.seq
 	}
 
+	/**
+	 * Find the edge in a set of paths where a collision occurred, if any.
+	 *
+	 * @param g The graph of the edge.
+	 * @param paths A TraversableOnce of the paths between which a collision must be found.
+	 * @tparam T The node type.
+	 * @return The edge where a collision occurred.
+	 */
 	def collisionEdge[T](g: Graph[T, UnDiEdge])(paths: TraversableOnce[g.Path]) : Option[g.EdgeT] = {
 		val checkCollision = paths.foldLeft[(Set[g.EdgeT], Option[g.EdgeT])]((Set.empty, None)) {
 			case ((previousEdges, collision), path) ⇒
