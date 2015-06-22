@@ -70,7 +70,12 @@ object Units {
 
 	implicit object LayeredNode extends Layered[Node] {
 		override def layer(a: Node, nrLayers: Int): Int = {
-			p(a)
+			// Correct layer to "base" layer, as 0.
+			if(p(a) == 32) {
+				0
+			} else {
+				Math.max(nrLayers - p(a) - 1, 0)
+			}
 		}
 	}
 

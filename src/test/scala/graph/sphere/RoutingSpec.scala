@@ -53,7 +53,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
 		val router = Routing.sphereRouter(g)(pathMap)
-		val route = router.route(g, g.nodes.size)(g.get(Label(1)), g.get(Label(5)), nodeMap)
+		val route = router.route(g, g.nodes.size)(g.get(Label(1)), g.get(Label(4)), nodeMap)
 
 		route.nodes.toList should (equal (List(Label(1), Label(3), Label(4)))
 			or equal (List(Label(1), Label(2), Label(4))))
@@ -98,7 +98,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val pathMap = Util.allShortestPaths(triangle)
 		val router = Routing.sphereRouter(triangle)(pathMap)
 		Random.setSeed(System.currentTimeMillis())
-		graphs.drop(4).take(4).foreach { g =>
+		graphs.drop(4).take(3).foreach { g =>
 			val nrNodes = g.nodes.size
 			val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 

@@ -13,7 +13,7 @@ import scalax.collection.immutable.Graph
 
 class RoutingSpec extends FlatSpec with Matchers {
 	"Ring routing" should "find the shortest path for graphs up to 5 subdivisions" in {
-		for(subdivisions ← 1 to 7) {
+		for(subdivisions ← 1 to 5) {
 			println(s"subdivsion: $subdivisions")
 			val g = Units.ring(subdivisions)
 			val graphSize = g.nodes.size

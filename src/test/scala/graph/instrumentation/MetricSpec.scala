@@ -20,7 +20,7 @@ class MetricSpec extends FlatSpec with Matchers {
 		val collidingEdge = Metric.collisionEdge(g)(List(route1, route2))
 		assert(collidingEdge.isDefined)
 		val layer = Layered.edgeLayer[ring.Units.Node](collidingEdge.get.toOuter).layer(collidingEdge.get.toOuter, 4)
-		layer should equal(4)
+		layer should equal(0)
 	}
 
 	it should "only occur when there is a collision" in {
@@ -61,7 +61,7 @@ class MetricSpec extends FlatSpec with Matchers {
 		val collidingEdge = Metric.collisionEdge(g)(List(route1, route2))
 		assert(collidingEdge.isDefined)
 		val layer = Layered.edgeLayer[sphere.Units.Node](collidingEdge.get.toOuter).layer(collidingEdge.get.toOuter, 2)
-		layer should equal(1)
+		layer should equal(0)
 	}
 
 	it should "have the right layer in layer 0" in {
@@ -87,6 +87,6 @@ class MetricSpec extends FlatSpec with Matchers {
 		val layeredEdge = Layered.edgeLayer[sphere.Units.Node](collidingEdge.get.toOuter)
 		val outer = collidingEdge.get.toOuter
 		val layer = layeredEdge.layer(outer, 3)
-		layer should equal(0)
+		layer should equal(1)
 	}
 }
