@@ -87,6 +87,6 @@ class MetricSpec extends FlatSpec with Matchers {
 		val layeredEdge = Layered.edgeLayer[sphere.Units.Node](collidingEdge.get.toOuter)
 		val outer = collidingEdge.get.toOuter
 		val layer = layeredEdge.layer(outer, 3)
-		layer should equal(1)
+		layer should equal(2)
 	}
 }

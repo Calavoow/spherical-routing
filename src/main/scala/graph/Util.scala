@@ -56,7 +56,7 @@ object Util {
 				val Seq(node1, node2) = edge.nodeSeq
 				val layer1 = implicitly[Layered[T]].layer(node1, nrLayers)
 				val layer2 = implicitly[Layered[T]].layer(node2, nrLayers)
-				Math.min(layer1, layer2)
+				Math.max(layer1, layer2)
 			}
 		}
 	}
