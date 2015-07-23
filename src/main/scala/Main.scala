@@ -15,7 +15,7 @@ import scalax.collection.immutable.Graph
 object Main {
 	def main(args: Array[String]) {
 		val (ringFile, sphereFile) = if(args.length == 2) {
-			println(s"(Over)writing to files ${args(0)} and ${args(1)}, are you sure? [y/N]")
+			println(s"(Over)writing to files ${args(0)} (ring) and ${args(1)} (sphere), are you sure? [y/N]")
 			val answer = StdIn.readLine()
 			if (answer == "y") {
 				(new FileWriter(args(0)), new FileWriter(args(1)))

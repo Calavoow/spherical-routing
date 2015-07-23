@@ -47,20 +47,20 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 	}
 
 	it should "always divide in the same way" in {
-		val graphs = for(_ <- 1 to 100) yield {
-			SphereApproximation.repeatedSubdivision(icosahedron).drop(3).next()
-		}
+		val graphs = Iterator.continually(SphereApproximation.repeatedSubdivision(icosahedron).drop(4).next())
 
-		graphs.sliding(2).foreach {
-			case Seq(g1, g2) => g1 should equal(g2)
+		graphs.sliding(2).take(1000).foreach {
+			case Seq(g1, g2) => assert(g1.equals(g2), s"Graph 1:$g1\nDoes not equal Graph 2:$g2")
 		}
 	}
 
 	it should "subdivide a triangle of different layers" in {
+		val node4 = Label(Vector(Set(4),Set(1,2)),1)
+		val node5 = Label(Vector(Set(5),Set(1,3)),1)
 		val g = Graph[Node, UnDiEdge](
-			Label(1) ~ Label(Vector(Set(1,2), Set(4)),1),
-			Label(1) ~ Label(Vector(Set(1,3), Set(5)),1),
-			Label(Vector(Set(1,3), Set(5)), 1) ~ Label(Vector(Set(1,2), Set(4)), 1)
+			Label(1) ~ node4,
+			Label(1) ~ node5,
+			node4 ~ node5
 		)
 		val g1 = SphereApproximation.subdivide(g)
 		g1.nodes.size should equal(6)

@@ -49,7 +49,8 @@ object SphereApproximation {
 		// Calculate which labels the new nodes should get.
 		val newLabels = edgeLabels(g)(subdivisionEdges, currentMaxLabel)
 
-		val newEdges = subdivisionEdges.par.flatMap { edge ⇒
+		// Subdivide each edge
+		val newEdges = subdivisionEdges.flatMap { edge ⇒
 			val currentLabel = newLabels(edge)
 			// Collect the two triangles that have at least two nodes in common with the edge.
 			val relTri = relevantTriangles(g)(edge, iteration)
@@ -66,11 +67,11 @@ object SphereApproximation {
 			val parentLabels = edge.nodes.toOuterNodes.toSet[Label]
 			val allLabels = toLabels ++ parentLabels
 
-			// Make an edge to every label
+			// Make an edge to every vertex it should be connected to.
 			for(label ← allLabels) yield {
 				currentLabel ~ label
 			}
-		}.seq
+		}
 
 		// Add the new edges and their nodes to the graph.
 		g.++(newEdges)

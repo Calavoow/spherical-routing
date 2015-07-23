@@ -40,7 +40,6 @@ class MetricSpec extends FlatSpec with Matchers {
 		val collidingEdge = Metric.collisionEdge(g)(List(route1, route2))
 		assert(collidingEdge.isDefined)
 		println(collidingEdge)
-		val layer = Layered.edgeLayer[ring.Units.Node](collidingEdge.get.toOuter).layer(collidingEdge.get.toOuter, 2)
 	}
 
 	"A collision on the sphere" should "have the right layer number" in {

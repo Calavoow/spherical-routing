@@ -103,9 +103,8 @@ object Metric {
 			val routes = nodeSeq.grouped(2).map {
 				case Seq(node1, node2) ⇒ router.route(g, nodeSeq.size)(node1, node2, nodeMap)
 			}
-			val routeSeq = routes.toIndexedSeq
 			// Check if any two paths collide.
-			val collidingEdge = collisionEdge(g)(routeSeq)
+			val collidingEdge = collisionEdge(g)(routes)
 			collidingEdge.map { e ⇒
 				Layered.edgeLayer[T](e.toOuter).layer(e.toOuter, nrLayers)
 			}
@@ -123,11 +122,11 @@ object Metric {
 	 * @return The edge where a collision occurred.
 	 */
 	def collisionEdge[T](g: Graph[T, UnDiEdge])(paths: TraversableOnce[g.Path]) : Option[g.EdgeT] = {
-		val checkCollision = paths.foldLeft[(Set[g.EdgeT], Option[g.EdgeT])]((Set.empty, None)) {
+		paths.toIterator.scanLeft[(Set[g.EdgeT], Option[g.EdgeT])]((Set.empty, None)) {
 			case ((previousEdges, collision), path) ⇒
 				val collidingEdge = collision.orElse(path.edges.find(previousEdges))
 				(previousEdges ++ path.edges, collidingEdge)
-		}
-		checkCollision._2
+		}.map(_._2).find(_.isDefined).flatten
+//		checkCollision._2
 	}
 }
