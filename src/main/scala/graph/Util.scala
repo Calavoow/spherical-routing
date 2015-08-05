@@ -63,7 +63,6 @@ object Util {
 
 	trait ID[T] {
 		def id(a: T): Int
-
 	}
 
 	def toIdSeq[T: ID](ids: Traversable[T]) : IndexedSeq[T] = {
@@ -128,9 +127,9 @@ object Util {
 		}
 	}
 
-	def allShortestPaths[N](g: Graph[N,UnDiEdge]) : Map[(g.NodeT, g.NodeT), g.Path] = {
+	def allShortestPaths[N : ID](g: Graph[N,UnDiEdge]) : Map[(Int, Int), g.Path] = {
 		g.nodes.toSeq.combinations(2).map {
-			case Seq(node1, node2) ⇒ (node1, node2) → node1.shortestPathTo(node2).get
+			case Seq(node1, node2) ⇒ (implicitly[ID[N]].id(node1), implicitly[ID[N]].id(node2)) → node1.shortestPathTo(node2).get
 		}.toMap
 	}
 

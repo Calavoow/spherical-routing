@@ -79,17 +79,18 @@ object Routing {
 	}
 	*/
 
-	def path(g: Sphere, g0: Sphere)(alpha: g.NodeT, beta: g.NodeT, ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
+	def path(g: Sphere, g0: Sphere)(alpha: g.NodeT, beta: g.NodeT, ancestorMap: Map[(Int, Int), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
 		pathRecursive(g, g0)(alpha, beta, List.empty, List.empty, ancestorMap, nodeMap)
 	}
 
 	@tailrec
 	def pathRecursive(g: Sphere, g0: Sphere)(alpha: g.NodeT, beta: g.NodeT, pathA: List[g.NodeT], pathB: List[g.NodeT],
-		ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
+		ancestorMap: Map[(Int, Int), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
 		val p6 = path6(g, g0)(alpha, beta, ancestorMap, nodeMap)
 		p6 match {
 			case Some(pab) => Util.joinPaths(g)(pathA.reverse, pab.nodes, pathB)
 			case None =>
+				println(s"alpha: $alpha / beta: $beta")
 				def stepDown(v : g.NodeT) : g.NodeT = {
 					val vNewID = v.label(2).head
 					nodeMap(vNewID)
@@ -173,12 +174,12 @@ object Routing {
 	}
 	*/
 
-	def path6(g: Sphere, g0: Sphere)(alpha : g.NodeT, beta: g.NodeT, ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : Option[g.Path] = {
+	def path6(g: Sphere, g0: Sphere)(alpha : g.NodeT, beta: g.NodeT, ancestorMap: Map[(Int, Int), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : Option[g.Path] = {
 		def p(nodes : Set[g.NodeT]) : Set[g.NodeT] = {
 			(for(node <- nodes) yield {
 				node.parents.map { ps =>
-					val p1 = g get ps._1
-					val p2 = g get ps._1
+					val p1 = nodeMap(ps._1.id)
+					val p2 = nodeMap(ps._2.id)
 					Set(p1, p2)
 				}.getOrElse(Set.empty)
 			}).flatten
@@ -189,7 +190,7 @@ object Routing {
 		val NBeta= Set(beta) ++ (for(el <- parentsBeta) yield el.neighbors).flatten
 
 		val intersection = NAlpha intersect NBeta
-		if(intersection.isDefined) {
+		if(intersection.nonEmpty) {
 			val gammaToDistance = for(gamma <- intersection) yield {
 				val pathAlpha : g.Path = alpha.shortestPathTo(gamma).get
 				val pathBeta : g.Path = gamma.shortestPathTo(beta).get
@@ -198,11 +199,15 @@ object Routing {
 			}
 			Some(gammaToDistance.minBy(_._2)._1)
 		} else {
-			val alpha0 = g0.nodes.find(_.id == alpha.id)
-			val beta0 = g0.nodes.find(_.id == beta.id)
-			for(a0 <- alpha0; b0 <- beta0) yield {
-				val g0Path = ancestorMap((a0, b0))
-				// Convert g0.Path to our larger graph g.Path.
+			val possiblePath = ancestorMap.get((alpha.id, beta.id)).orElse {
+				val reversedPath = ancestorMap.get((beta.id,alpha.id))
+				reversedPath.map { rPath =>
+					val pathNodes = rPath.nodes.toSeq.reverse
+					val p = g0.newPathBuilder(pathNodes.head)(sizeHint = 3)
+					p.++=(pathNodes.tail).result()
+				}
+			}
+			possiblePath.map { g0Path =>
 				val gNodes = g0Path.nodes.map { g0Node =>
 					nodeMap(g0Node.id)
 				}
@@ -213,7 +218,7 @@ object Routing {
 		}
 	}
 
-	def sphereRouter(g0: Sphere)(ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path]): Router[Node] = {
+	def sphereRouter(g0: Sphere)(ancestorMap: Map[(Int, Int), g0.Path]): Router[Node] = {
 		new Router[Node] {
 			override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path = {
 				Routing.path(g = g, g0 = g0)(node1, node2, ancestorMap, nodeMap)
