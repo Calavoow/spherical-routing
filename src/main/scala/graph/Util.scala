@@ -147,4 +147,16 @@ object Util {
 		import Integral.Implicits._
 		factorial(n) / (factorial(k) * factorial(n-k))
 	}
+
+	def joinPaths(g: Graph[Node, UnDiEdge])(pathNodes: Traversable[g.NodeT]*): g.Path = {
+		val nodes = pathNodes.reduce(_ ++ _)
+		val path = g.newPathBuilder(nodes.head)(sizeHint = 64)
+		path ++= nodes
+//		val completePath = pathNodes.foldLeft[g.PathBuilder](path) {
+//			case (curPath, joinPath) =>
+//				curPath ++= joinPath
+//		}.result()
+		path.result()
+	}
+
 }

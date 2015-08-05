@@ -10,7 +10,7 @@ object Units {
 	type Sphere = Graph[Node, UnDiEdge]
 
 	object Label {
-		def apply(i: Int) = new Label(Vector(Set(i)), 0)
+		def apply(i: Int) = new Label(Vector(Set(i)), 0, None)
 
 		/**
 		 * Construct a label given two parents and an ID.
@@ -22,19 +22,55 @@ object Units {
 		 * @param id The ID.
 		 * @return A new Label instance, with the label properly filtered.
 		 */
-		def apply(parent1: Label, parent2: Label, id: Int) = {
+		def apply(parent1: Label, parent2: Label, id: Int, nodes : Set[Label]) = {
 			// Zip both labels, until one of the labels reaches the base graph.
-			val unfilteredLabel = parent1.label.zip(parent2.label).toIndexedSeq.map {
+			val unfilteredLabel = parent1.label.zip(parent2.label).map {
 				case (l1, l2) =>
 					l1 union l2
 			}
+//			println(s"$id. P1: $parent1 / P2: $parent2")
 			// Calculate all previous elements that have occurred at each index.
-			val prefixUnion = unfilteredLabel.scanLeft(Set[Int]())(_ union _)
-			val filteredLabel = unfilteredLabel.zip(prefixUnion).map {
-				case (unfilteredEl, prefixSet) ⇒ unfilteredEl -- prefixSet
-			}
-			new Label(Set(id) +: filteredLabel, parent1.layer.max(parent2.layer) + 1)
+//			val prefixUnion = unfilteredLabel.scanLeft(Set[Int]())(_ union _)
+			val filteredLabel = unfilteredLabel.foldLeft((List[Set[Label]](), Set[Int]())){
+				case ((filteredEls, prefixUnion), unfilteredEl) =>
+					val removedDuplicates = unfilteredEl -- prefixUnion
+					val vertices: Set[Label] = nodes.filter(n => removedDuplicates.contains(n.id))
+					val nonSimpleVertices = vertices.filterNot { vertex =>
+						// Neither parent must already be in the label, nor in the current label.
+						// If parents = None, then there are no parents already in the label.
+						vertex.parents.exists {
+							case (p1,p2) =>
+								prefixUnion(p1.id) || prefixUnion(p2.id) || removedDuplicates(p1.id) || removedDuplicates(p2.id)
+						}
+					}
+					(nonSimpleVertices :: filteredEls, prefixUnion union unfilteredEl)
+			}._1.reverse
+//			println(filteredLabel)
+//			val filteredLabel = unfilteredLabel.zip(prefixUnion).map {
+//				case (unfilteredEl, prefixSet) ⇒
+//					val removedDuplicates = unfilteredEl -- prefixSet
+//					val vertices: Set[Label] = nodes.filter(n => removedDuplicates.contains(n.id))
+//					vertices.filterNot { vertex =>
+//						// Neither parent must already be in the label, nor in the current label.
+//						val (p1, p2) = vertex.parents
+//						prefixSet(p1.id) || prefixSet(p2.id) || removedDuplicates(p1.id) || removedDuplicates(p2.id)
+//					}
+//			}
+
+			// Remove non-simple vertices that do not have a parent in the label
+			val filterNoParents = filteredLabel.scanRight(nodes){
+				case (labeli, labeli1) =>
+					labeli.filter { vertex =>
+						// Get all vertices from label_i that have a parent in label_{i+1}
+						vertex.parents.map {
+							case (p1,p2) => labeli1(p1) || labeli1(p2)
+						}.getOrElse(true) // Always keep outer layer vertices.
+					}
+			}.dropRight(1).toIndexedSeq
+//			println(filterNoParents)
+			new Label(Set(id) +: filterNoParents.map(_.map(_.id)), parent1.layer.max(parent2.layer) + 1, Some(parent1, parent2))
 		}
+
 
 		implicit object LayeredLabel extends Layered[Label] {
 			def layer(x: Label, nrLayers: Int) = {
@@ -56,7 +92,7 @@ object Units {
 	 * This is also used to easily find the closest common ancestor.
 	 * @param label The label of this node.
 	 */
-	case class Label(label: IndexedSeq[Set[Int]], layer: Int) {
+	case class Label(label: IndexedSeq[Set[Int]], layer: Int, parents: Option[(Label, Label)]) {
 		/**
 		 * The id of this node.
 		 *

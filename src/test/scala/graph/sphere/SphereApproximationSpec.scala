@@ -41,6 +41,7 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		g1.nodes should contain( Label(0) )
 		g1.nodes should contain( Label(1) )
 		g1.nodes should contain( Label(2) )
+		g1.nodes.foreach(println)
 		g1.nodes.find(_.label.last == Set(0,1)) should be('defined)
 		g1.nodes.find(_.label.last == Set(1,2)) should be('defined)
 		g1.nodes.find(_.label.last == Set(0,2)) should be('defined)
@@ -49,14 +50,14 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 	it should "always divide in the same way" in {
 		val graphs = Iterator.continually(SphereApproximation.repeatedSubdivision(icosahedron).drop(4).next())
 
-		graphs.sliding(2).take(1000).foreach {
+		graphs.sliding(2).take(250).foreach {
 			case Seq(g1, g2) => assert(g1.equals(g2), s"Graph 1:$g1\nDoes not equal Graph 2:$g2")
 		}
 	}
 
 	it should "subdivide a triangle of different layers" in {
-		val node4 = Label(Vector(Set(4),Set(1,2)),1)
-		val node5 = Label(Vector(Set(5),Set(1,3)),1)
+		val node4 = Label(Vector(Set(4),Set(1,2)),1, Some(Label(1), Label(2)))
+		val node5 = Label(Vector(Set(5),Set(1,3)),1, Some(Label(1), Label(3)))
 		val g = Graph[Node, UnDiEdge](
 			Label(1) ~ node4,
 			Label(1) ~ node5,
@@ -66,11 +67,11 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		g1.nodes.size should equal(6)
 		g1.edges.size should equal(12)
 		g1.nodes should contain( Label(1) )
-		g1.nodes should contain( Label( Vector(Set(1, 2), Set(4)), 1) )
+		g1.nodes should contain( Label( Vector(Set(4), Set(1,2)), 1, Some(Label(1), Label(2))) )
 		println(g1)
-		// There must be a node between 1 and 4.
+		// There must be a node between 1 and 4, but only have 1 as parent.
 		assert(g1.nodes.exists { node ⇒
-			node.layer == 2 && node.label.last.equals(Set(1, 4))
+			node.layer == 2 && node.label.last.equals(Set(1))
 		})
 	}
 
@@ -82,25 +83,27 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		}
 	}
 
-	"The labelling" should "have a maximum size of k+1 on the triangle" in {
+	"The labelling" should "have a min size 1, and max size of 3 on the triangle" in {
 		val gs = SphereApproximation.repeatedSubdivision(Units.triangle)
-		gs.take(10).foreach { graph ⇒
+		gs.take(7).foreach { graph ⇒
 			println("Testing next subdivision.")
 			graph.nodes.par.foreach{ node ⇒
-				node.label.zipWithIndex.foreach{ case (set, index) ⇒
-					assert(set.size <= index + 1, s"Node had label larger than ${index + 1}: $node")
+				node.label.foreach { labelEl =>
+					assert(labelEl.size >= 1, s"Node had label equal to 0 size: $node")
+					assert(labelEl.size <= 3, s"Node had too large label: $node")
 				}
 			}
 		}
 	}
 
-	it should "have a maximum size of k+1 on the icosahedron" in {
+	it should "have a min size 1 and max size of 3 on the icosahedron" in {
 		val gs = SphereApproximation.repeatedSubdivision(Units.icosahedron)
-		gs.take(8).foreach { graph ⇒
+		gs.take(6).foreach { graph ⇒
 			println("Tesing next subdivision.")
 			graph.nodes.par.foreach{ node ⇒
-				node.label.zipWithIndex.foreach{ case (set, index) ⇒
-					assert(set.size <= index + 1, s"Node had label larger than ${index + 1}: $node")
+				node.label.foreach { labelEl =>
+					assert(labelEl.size >= 1, s"Node had label equal to 0 size: $node")
+					assert(labelEl.size <= 3, s"Node had too large label: $node")
 				}
 			}
 		}

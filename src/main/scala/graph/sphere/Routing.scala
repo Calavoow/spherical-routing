@@ -1,5 +1,6 @@
 package graph.sphere
 
+import graph.Util
 import instrumentation.Metric.Router
 
 import scala.annotation.tailrec
@@ -20,10 +21,11 @@ object Routing {
 	 * @param to The node to route towards.
 	 * @return The route.
 	 */
+	/*
 	def route(g: Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge])
 	         (from: g.NodeT, to: g.NodeT, ancestorRouteMap: Map[(g0.NodeT, g0.NodeT), g0.Path], nodeMap: IndexedSeq[g.NodeT]): g.Path = {
-		val path = g.newPathBuilder(from)(sizeHint = 64)
-		path.add(from)
+		val pathAlpha = g.newPathBuilder(from)(sizeHint = 64)
+		val pathBeta = g.newPathBuilder(to)(sizeHint = 64)
 		// Step 1 Check if they are adjacent
 		if( path.add(to) ) return path.result()
 
@@ -75,6 +77,30 @@ object Routing {
 		// Construct the complete path.
 		path.++=(fromToParent.nodes).++=(ancestPath.nodes).++=(toToParent.nodes.toSeq.reverse).result()
 	}
+	*/
+
+	def path(g: Sphere, g0: Sphere)(alpha: g.NodeT, beta: g.NodeT, ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
+		pathRecursive(g, g0)(alpha, beta, List.empty, List.empty, ancestorMap, nodeMap)
+	}
+
+	@tailrec
+	def pathRecursive(g: Sphere, g0: Sphere)(alpha: g.NodeT, beta: g.NodeT, pathA: List[g.NodeT], pathB: List[g.NodeT],
+		ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
+		val p6 = path6(g, g0)(alpha, beta, ancestorMap, nodeMap)
+		p6 match {
+			case Some(pab) => Util.joinPaths(g)(pathA.reverse, pab.nodes, pathB)
+			case None =>
+				def stepDown(v : g.NodeT) : g.NodeT = {
+					val vNewID = v.label(2).head
+					nodeMap(vNewID)
+				}
+				if(beta.layer > alpha.layer) {
+					pathRecursive(g, g0)(alpha, stepDown(beta), pathA, beta :: pathB, ancestorMap, nodeMap)
+				} else {
+					pathRecursive(g, g0)(stepDown(alpha), beta, alpha :: pathA, pathB, ancestorMap, nodeMap)
+				}
+		}
+	}
 
 
 	/**
@@ -88,6 +114,7 @@ object Routing {
 	 * @return The common ancestor. Could be None if there is no common ancestor in the label.
 	 *         Then routing must occur on the lowest layer.
 	 */
+	/*
 	def closestAncestor(g: Graph[Node, UnDiEdge])(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): Option[g.NodeT] = {
 		// Find the first label entries in node1 which also occur in node2's label.
 		val intersection = node1.label.view.map { entries1 =>
@@ -101,6 +128,7 @@ object Routing {
 			nodeMap(id)
 		}
 	}
+	*/
 
 	/**
 	 * Use the label to route from a parent node to a child node.
@@ -113,6 +141,7 @@ object Routing {
 	 * @param parent The parent node.
 	 * @return A path from child to parent.
 	 */
+	/*
 	def labelRoute(g: Graph[Node, UnDiEdge])(child: g.NodeT, parent: g.NodeT): g.Path = recursiveLabelRoute(g)(child, parent, Nil)
 
 	@tailrec
@@ -142,11 +171,53 @@ object Routing {
 			recursiveLabelRoute(g)(child, bestNeighbor, parent :: path)
 		}
 	}
+	*/
+
+	def path6(g: Sphere, g0: Sphere)(alpha : g.NodeT, beta: g.NodeT, ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : Option[g.Path] = {
+		def p(nodes : Set[g.NodeT]) : Set[g.NodeT] = {
+			(for(node <- nodes) yield {
+				node.parents.map { ps =>
+					val p1 = g get ps._1
+					val p2 = g get ps._1
+					Set(p1, p2)
+				}.getOrElse(Set.empty)
+			}).flatten
+		}
+		val parentsAlpha = Set(alpha) ++ p(Set(alpha)) ++ p(p(Set(alpha)))
+		val NAlpha = Set(alpha) ++ (for(el <- parentsAlpha) yield el.neighbors).flatten
+		val parentsBeta = Set(beta) ++ p(Set(beta)) ++ p(p(Set(beta)))
+		val NBeta= Set(beta) ++ (for(el <- parentsBeta) yield el.neighbors).flatten
+
+		val intersection = NAlpha intersect NBeta
+		if(intersection.isDefined) {
+			val gammaToDistance = for(gamma <- intersection) yield {
+				val pathAlpha : g.Path = alpha.shortestPathTo(gamma).get
+				val pathBeta : g.Path = gamma.shortestPathTo(beta).get
+				val completePath = Util.joinPaths(g)(pathAlpha.nodes, pathBeta.nodes)
+				completePath -> (pathAlpha.edges.size + pathBeta.edges.size)
+			}
+			Some(gammaToDistance.minBy(_._2)._1)
+		} else {
+			val alpha0 = g0.nodes.find(_.id == alpha.id)
+			val beta0 = g0.nodes.find(_.id == beta.id)
+			for(a0 <- alpha0; b0 <- beta0) yield {
+				val g0Path = ancestorMap((a0, b0))
+				// Convert g0.Path to our larger graph g.Path.
+				val gNodes = g0Path.nodes.map { g0Node =>
+					nodeMap(g0Node.id)
+				}
+				// Path is at most of length 3.
+				val builder = g.newPathBuilder(gNodes.head)(sizeHint = 3)
+				builder.++=(gNodes.tail).result()
+			}
+		}
+	}
 
 	def sphereRouter(g0: Sphere)(ancestorMap: Map[(g0.NodeT, g0.NodeT), g0.Path]): Router[Node] = {
 		new Router[Node] {
 			override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path = {
-				Routing.route(g = g, g0 = g0)(node1, node2, ancestorMap, nodeMap)
+				Routing.path(g = g, g0 = g0)(node1, node2, ancestorMap, nodeMap)
+//				Routing.route(g = g, g0 = g0)(node1, node2, ancestorMap, nodeMap)
 			}
 		}
 	}

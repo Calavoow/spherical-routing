@@ -11,6 +11,7 @@ import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
 
 class RoutingSpec extends FlatSpec with Matchers {
+	/*
 	"Labelroute" should "route from a child to a parent" in {
 		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
 		val child = g.nodes.find(_.id == 18).get
@@ -18,6 +19,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val path = Routing.labelRoute(g)(child = child, parent = parent)
 		assert(path.nodes.size == 3, s"Path was different than expected.\n $path")
 	}
+	*/
 
 	"Route" should "find a one-hop path" in {
 		val g = Graph[Node, UnDiEdge](
@@ -82,15 +84,20 @@ class RoutingSpec extends FlatSpec with Matchers {
 		}
 	}
 
-	it should "find an m+1 path on the face upto 4 dvisions" in {
+	it should "find a shortest path on the face upto 4 dvisions" in {
 		// Make the three t, nodeMapimes subdivision graph.
 		val graphs = SphereApproximation.repeatedSubdivision(triangle)
 		graphs.take(4).foreach(g => atMostM1Path(g, triangle))
 	}
 
-	it should "find an m+1 path upto 3 divisions" in {
+	it should "find a shortest path upto 3 divisions" in {
 		val graphs = SphereApproximation.repeatedSubdivision(icosahedron)
 		graphs.take(3).foreach(g => atMostM1Path(g, icosahedron))
+	}
+
+	it should "find an m+1 path in 6 divisions" in {
+		val graphs = SphereApproximation.repeatedSubdivision(icosahedron)
+		graphs.drop(5).take(1).foreach(g => atMostM1Path(g, icosahedron))
 	}
 
 	it should "find an m+1 path on the face upto 8 division with random sampling" in {
@@ -127,7 +134,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 				val route = router.route(g, nrNodes)(node1, node2, nodeMap)
 				assert(route.nodes.head == node1)
 				assert(route.nodes.last == node2)
-				assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+				assert(shortestPath.edges.size == route.edges.size, s"Shortestpath was unequal than shortest route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
 				if((counter % 10000L) == 0) println(s"$counter / $combinations")
 				counter += 1
 		}

@@ -86,9 +86,10 @@ object SphereApproximation {
 	 */
 	def edgeLabels(g: Graph[Node, UnDiEdge])(edges: Iterable[g.EdgeT], currentMaxID: Int): Map[g.EdgeT, Label] = {
 		// Add a unique label to each edge.
+		val nodes = g.nodes.toOuterNodes.toSet[Label]
 		(for ((edge, index) <- edges.zipWithIndex) yield {
 			val p1 :: p2 :: _ = edge.nodes.toList
-			edge → Label(p1, p2, currentMaxID + index + 1)
+			edge → Label(p1, p2, currentMaxID + index + 1, nodes)
 		}).toMap
 	}
 
