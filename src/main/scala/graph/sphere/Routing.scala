@@ -1,9 +1,11 @@
 package graph.sphere
 
 import graph.Util
+import graph.Util.ID
 import instrumentation.Metric.Router
 
 import scala.annotation.tailrec
+import scala.collection.immutable.HashSet
 import scala.language.postfixOps
 import scala.util.Random
 import scalax.collection.GraphEdge._
@@ -88,11 +90,15 @@ object Routing {
 		ancestorMap: Map[(Int, Int), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
 		val p6 = path6(g, g0)(alpha, beta, ancestorMap, nodeMap)
 		p6 match {
-			case Some(pab) => Util.joinPaths(g)(pathA.reverse, pab.nodes, pathB)
+			case Some(pab) =>
+				val joinedPaths = Util.joinPaths(g)((alpha :: pathA).reverse, pab.nodes, beta :: pathB)
+				joinedPaths
 			case None =>
 				println(s"alpha: $alpha / beta: $beta")
 				def stepDown(v : g.NodeT) : g.NodeT = {
-					val vNewID = v.label(2).head
+					val labelSeq = v.label(1).toIndexedSeq
+					val vNewID = labelSeq(Random.nextInt(labelSeq.size))
+					// val vNewID = v.label(1).head
 					nodeMap(vNewID)
 				}
 				if(beta.layer > alpha.layer) {
@@ -175,40 +181,65 @@ object Routing {
 	*/
 
 	def path6(g: Sphere, g0: Sphere)(alpha : g.NodeT, beta: g.NodeT, ancestorMap: Map[(Int, Int), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : Option[g.Path] = {
-		def p(nodes : Set[g.NodeT]) : Set[g.NodeT] = {
-			(for(node <- nodes) yield {
-				node.parents.map { ps =>
-					val p1 = nodeMap(ps._1.id)
-					val p2 = nodeMap(ps._2.id)
+		case class Breadcrumb(node : g.NodeT, breadcrumbs: List[g.NodeT] = List.empty) {
+			def :: (newHead: g.NodeT) : Breadcrumb = Breadcrumb(newHead, node :: breadcrumbs)
+
+			/**
+			 * Provide methods so that breadcrumbs are put into a set like the ID of the [[node]] field.
+			 **/
+			override def hashCode(): Int = node.id.hashCode()
+			override def equals(obj: scala.Any): Boolean = obj match {
+				case b: Breadcrumb => b.node.id == node.id
+				case _ => false
+			}
+		}
+
+		def p(breadcrumbs : Set[Breadcrumb]) : Set[Breadcrumb] = {
+			(for(breadcrumb <- breadcrumbs) yield {
+				breadcrumb.node.parents.map { ps =>
+					val p1 = nodeMap(ps._1.id) :: breadcrumb
+					val p2 = nodeMap(ps._2.id) :: breadcrumb
 					Set(p1, p2)
 				}.getOrElse(Set.empty)
 			}).flatten
 		}
-		val parentsAlpha = Set(alpha) ++ p(Set(alpha)) ++ p(p(Set(alpha)))
-		val NAlpha = Set(alpha) ++ (for(el <- parentsAlpha) yield el.neighbors).flatten
-		val parentsBeta = Set(beta) ++ p(Set(beta)) ++ p(p(Set(beta)))
-		val NBeta= Set(beta) ++ (for(el <- parentsBeta) yield el.neighbors).flatten
 
-		val intersection = NAlpha intersect NBeta
+		def N(breadcrumbs : Set[Breadcrumb]) : Set[Breadcrumb] = {
+			for(
+				breadcrumb <- breadcrumbs;
+				neighNode <- breadcrumb.node.neighbors
+			) yield {
+				neighNode :: breadcrumb
+			}
+		}
+
+		val bcA = Set(Breadcrumb(alpha))
+		val bcB = Set(Breadcrumb(beta))
+
+		/**
+		 * Note: We rely on the fact that on equality of Breadcrumbs, the first in the set is kept in the set,
+		 * so that lowest distant breadcrumbs are kept in the set.
+		 */
+		val parentsAlpha = bcA ++ p(bcA) ++ p(p(bcA))
+		val nAlpha = parentsAlpha ++ N(parentsAlpha)
+		val parentsBeta = bcB ++ p(bcB) ++ p(p(bcB))
+		val nBeta = parentsBeta ++ N(parentsBeta)
+
+		val intersection = nAlpha intersect nBeta
 		if(intersection.nonEmpty) {
 			val gammaToDistance = for(gamma <- intersection) yield {
-				val pathAlpha : g.Path = alpha.shortestPathTo(gamma).get
-				val pathBeta : g.Path = gamma.shortestPathTo(beta).get
-				val completePath = Util.joinPaths(g)(pathAlpha.nodes, pathBeta.nodes)
-				completePath -> (pathAlpha.edges.size + pathBeta.edges.size)
+				val pathAlpha : List[g.NodeT] = nAlpha.find(_.equals(gamma)).get.breadcrumbs.reverse
+				val pathBeta : List[g.NodeT] = nBeta.find(_.equals(gamma)).get.breadcrumbs
+				val completePath = Util.joinPaths(g)(pathAlpha,  gamma.node :: pathBeta)
+				completePath -> (pathAlpha.size + pathBeta.size + 1)
 			}
 			Some(gammaToDistance.minBy(_._2)._1)
 		} else {
-			val possiblePath = ancestorMap.get((alpha.id, beta.id)).orElse {
-				val reversedPath = ancestorMap.get((beta.id,alpha.id))
-				reversedPath.map { rPath =>
-					val pathNodes = rPath.nodes.toSeq.reverse
-					val p = g0.newPathBuilder(pathNodes.head)(sizeHint = 3)
-					p.++=(pathNodes.tail).result()
-				}
+			val possiblePath = ancestorMap.get((alpha.id, beta.id)).map(_.nodes.toSeq).orElse {
+				ancestorMap.get((beta.id,alpha.id)).map(_.nodes.toSeq.reverse)
 			}
 			possiblePath.map { g0Path =>
-				val gNodes = g0Path.nodes.map { g0Node =>
+				val gNodes = g0Path.map { g0Node =>
 					nodeMap(g0Node.id)
 				}
 				// Path is at most of length 3.
