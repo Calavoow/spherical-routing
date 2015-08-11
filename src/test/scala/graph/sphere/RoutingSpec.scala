@@ -1,6 +1,6 @@
 package graph.sphere
 
-import graph.Util
+import graph.{ShortestPaths, Util}
 import graph.Util.ID
 import graph.sphere.Units._
 import org.scalatest.{FlatSpec, Matchers}
@@ -127,16 +127,26 @@ class RoutingSpec extends FlatSpec with Matchers {
 
 		val nrNodes = g.nodes.size
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
+		val shortestPaths = ShortestPaths.allShortestPaths(g)
 
-		g.nodes.toSeq.combinations(2).foreach {
-			case Seq(node1, node2) =>
-				val shortestPath = node1.shortestPathTo(node2).get
-				val route = router.route(g, nrNodes)(node1, node2, nodeMap)
-				assert(route.nodes.head == node1)
-				assert(route.nodes.last == node2)
-				assert(shortestPath.edges.size == route.edges.size, s"Shortestpath was unequal than shortest route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
-				if((counter % 10000L) == 0) println(s"$counter / $combinations")
-				counter += 1
+		for(((node1,node2), shortestDistance) <- shortestPaths) {
+			val route = router.route(g, nrNodes)(node1, node2, nodeMap)
+			assert(route.nodes.head == node1)
+			assert(route.nodes.last == node2)
+			assert(route.edges.size == shortestDistance, s"Shortestpath was unequal than shortest route for nodes ($node1, $node2).\n${route.nodes}")
+			if((counter % 10000L) == 0) println(s"$counter / $combinations")
+			counter += 1
+
 		}
+		// g.nodes.toSeq.combinations(2).foreach {
+		// 	case Seq(node1, node2) =>
+		// 		val shortestPath = node1.shortestPathTo(node2).get
+		// 		val route = router.route(g, nrNodes)(node1, node2, nodeMap)
+		// 		assert(route.nodes.head == node1)
+		// 		assert(route.nodes.last == node2)
+		// 		assert(shortestPath.edges.size == route.edges.size, s"Shortestpath was unequal than shortest route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+		// 		if((counter % 10000L) == 0) println(s"$counter / $combinations")
+		// 		counter += 1
+		// }
 	}
 }
