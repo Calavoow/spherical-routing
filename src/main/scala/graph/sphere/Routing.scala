@@ -1,11 +1,9 @@
 package graph.sphere
 
 import graph.Util
-import graph.Util.ID
 import instrumentation.Metric.Router
 
 import scala.annotation.tailrec
-import scala.collection.immutable.HashSet
 import scala.language.postfixOps
 import scala.util.Random
 import scalax.collection.GraphEdge._
@@ -64,16 +62,15 @@ object Routing {
 			}).flatten
 		}
 
-		def N(breadcrumbs : Set[Breadcrumb]) : Set[Breadcrumb] = {
-			// Make sure that the smallest breadcrumbs come first.
-			val smallToLarge = breadcrumbs.toSeq.sortBy(_.breadcrumbs.size)
-			val neighbours = for(
-				breadcrumb <- smallToLarge;
+		def N(breadcrumbs : Set[Breadcrumb]) : Seq[Breadcrumb] = {
+			// Start with shortest breadcrumbs first.
+			val sorted = breadcrumbs.toSeq.sortBy(_.breadcrumbs.size)
+			for(
+				breadcrumb <- sorted;
 				neighNode <- breadcrumb.node.neighbors
 			) yield {
 				neighNode :: breadcrumb
 			}
-			neighbours.toSet
 		}
 
 		val bcA = Set(Breadcrumb(alpha))
@@ -83,8 +80,8 @@ object Routing {
 		 * Note: We rely on the fact that on equality of Breadcrumbs, the first in the set is kept in the set,
 		 * so that lowest distant breadcrumbs are kept in the set.
 		 */
-		val parentsAlpha : Set[Breadcrumb] = bcA ++ p(bcA) ++ p(p(bcA))
-		val nAlpha : Set[Breadcrumb] = parentsAlpha ++ N(parentsAlpha)
+		val parentsAlpha = bcA ++ p(bcA) ++ p(p(bcA))
+		val nAlpha = parentsAlpha ++ N(parentsAlpha)
 		val parentsBeta = bcB ++ p(bcB) ++ p(p(bcB))
 		val nBeta = parentsBeta ++ N(parentsBeta)
 
