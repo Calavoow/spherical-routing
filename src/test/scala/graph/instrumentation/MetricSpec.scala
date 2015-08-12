@@ -50,13 +50,13 @@ class MetricSpec extends FlatSpec with Matchers {
 		val v1 = g.nodes.find(_.id == 5).get
 		val v2 = g.nodes.find(_.id == 1).get
 
-		val graphSize = g.nodes.size
-		val nodeMap = g.nodes.toIndexedSeq.sortBy(node ⇒ implicitly[ID[sphere.Units.Node]].id(node))
-		val pathMap = Util.allShortestPaths(g0)
-		val sphereRouter = sphere.Routing.sphereRouter(g0)(pathMap)
+//		val graphSize = g.nodes.size
+//		val nodeMap = g.nodes.toIndexedSeq.sortBy(_.id)
+//		val pathMap = Util.allShortestPaths(g0)
+//		val sphereRouter = sphere.Routing.sphereRouter(g0)(pathMap)
 
-		val route1 = sphereRouter.route(g, graphSize)(n1, n2, nodeMap)
-		val route2 = sphereRouter.route(g, graphSize)(v1, v2, nodeMap)
+		val route1 = g.newPathBuilder(n1).+=(n2).result()
+		val route2 = g.newPathBuilder(v1).+=(n1).+=(v2).result()
 		val collidingEdge = Metric.collisionEdge(g)(List(route1, route2))
 		assert(collidingEdge.isDefined)
 		val layer = Layered.edgeLayer[sphere.Units.Node](collidingEdge.get.toOuter).layer(collidingEdge.get.toOuter, 2)
@@ -73,7 +73,7 @@ class MetricSpec extends FlatSpec with Matchers {
 		val v2 = g.nodes.find(_.id == 12).get
 
 		val graphSize = g.nodes.size
-		val nodeMap = g.nodes.toIndexedSeq.sortBy(node ⇒ implicitly[ID[sphere.Units.Node]].id(node))
+		val nodeMap = g.nodes.toIndexedSeq.sortBy(_.id)
 		val pathMap = Util.allShortestPaths(g0)
 		val sphereRouter = sphere.Routing.sphereRouter(g0)(pathMap)
 

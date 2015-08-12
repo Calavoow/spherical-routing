@@ -42,9 +42,9 @@ object ShortestPaths {
 				dist(j)(i) = dist(i)(k) + dist(k)(j)
 			}
 
-			if(k > highestK && k % 100 == 0) {
+			if(k > highestK && (k % 100) == 0) {
 				println(s"$k / $vSize")
-				highestK += 1
+				highestK = k
 			}
 		}
 

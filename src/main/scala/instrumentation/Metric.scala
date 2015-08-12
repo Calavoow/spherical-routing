@@ -122,11 +122,10 @@ object Metric {
 	 * @return The edge where a collision occurred.
 	 */
 	def collisionEdge[T](g: Graph[T, UnDiEdge])(paths: TraversableOnce[g.Path]) : Option[g.EdgeT] = {
-		paths.toIterator.scanLeft[(Set[g.EdgeT], Option[g.EdgeT])]((Set.empty, None)) {
+		paths.foldLeft[(Set[g.EdgeT], Option[g.EdgeT])](Set.empty, None) {
 			case ((previousEdges, collision), path) ⇒
 				val collidingEdge = collision.orElse(path.edges.find(previousEdges))
 				(previousEdges ++ path.edges, collidingEdge)
-		}.map(_._2).find(_.isDefined).flatten
-//		checkCollision._2
+		}._2
 	}
 }
