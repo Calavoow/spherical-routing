@@ -95,12 +95,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		graphs.take(5).foreach(g => atMostM1Path(g, icosahedron))
 	}
 
-//	it should "find an m+1 path in 6 divisions" in {
-//		val graphs = SphereApproximation.repeatedSubdivision(icosahedron)
-//		graphs.drop(5).take(1).foreach(g => atMostM1Path(g, icosahedron))
-//	}
-
-	it should "find an m+1 path on the face between 7-8 divisions with random sampling" in {
+	it should "find the shortest path on the face between 7-8 divisions with random sampling" in {
 		val graphs = SphereApproximation.repeatedSubdivision(triangle)
 		val pathMap = Util.allShortestPaths(triangle)
 		val router = Routing.sphereRouter(triangle)(pathMap)
@@ -131,8 +126,8 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val shortestPaths = ShortestPaths.allDistances(g)
 		for(((node1,node2), shortestDistance) <- shortestPaths) {
 			val route = router.route(g, nrNodes)(node1, node2, nodeMap)
-			assert(route.nodes.head == node1)
-			assert(route.nodes.last == node2)
+			assert(route.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${route.nodes}")
+			assert(route.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${route.nodes}")
 			assert(route.edges.size == shortestDistance, s"Shortestpath was unequal to shortest route for nodes ($node1, $node2).\n${route.nodes}")
 			if((counter % 10000L) == 0) println(s"$counter / ${shortestPaths.size}")
 			counter += 1

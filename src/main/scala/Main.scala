@@ -70,8 +70,7 @@ object Main {
 						// Probably faster to concat in memory (`samples` integers) and then write at once.
 						ringFile.write(s"$ringNodes,$concurrentPaths,${ringCollisions.mkString(",")}\n")
 						ringFile.flush()
-						val sphereCollisions = Metric
-							.randomCollisionCount(g = sphereG,
+						val sphereCollisions = Metric.randomCollisionCount(g = sphereG,
 								nrLayers = sphereIterations + 1,
 						        concurrentPaths = concurrentPaths,
 						        samples = samples) (sphere.Routing.sphereRouter(g0)(ancestorPathMap))
