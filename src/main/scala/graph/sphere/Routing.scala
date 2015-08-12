@@ -94,7 +94,6 @@ object Routing {
 				val joinedPaths = Util.joinPaths(g)((alpha :: pathA).reverse, pab.nodes, beta :: pathB)
 				joinedPaths
 			case None =>
-				println(s"alpha: $alpha / beta: $beta")
 				def stepDown(v : g.NodeT) : g.NodeT = {
 					val labelSeq = v.label(1).toIndexedSeq
 					val vNewID = labelSeq(Random.nextInt(labelSeq.size))
@@ -205,12 +204,15 @@ object Routing {
 		}
 
 		def N(breadcrumbs : Set[Breadcrumb]) : Set[Breadcrumb] = {
-			for(
-				breadcrumb <- breadcrumbs;
+			// Make sure that the smallest breadcrumbs come first.
+			val smallToLarge = breadcrumbs.toSeq.sortBy(_.breadcrumbs.size)
+			val neighbours = for(
+				breadcrumb <- smallToLarge;
 				neighNode <- breadcrumb.node.neighbors
 			) yield {
 				neighNode :: breadcrumb
 			}
+			neighbours.toSet
 		}
 
 		val bcA = Set(Breadcrumb(alpha))
@@ -220,20 +222,24 @@ object Routing {
 		 * Note: We rely on the fact that on equality of Breadcrumbs, the first in the set is kept in the set,
 		 * so that lowest distant breadcrumbs are kept in the set.
 		 */
-		val parentsAlpha = bcA ++ p(bcA) ++ p(p(bcA))
-		val nAlpha = parentsAlpha ++ N(parentsAlpha)
+		val parentsAlpha : Set[Breadcrumb] = bcA ++ p(bcA) ++ p(p(bcA))
+		val nAlpha : Set[Breadcrumb] = parentsAlpha ++ N(parentsAlpha)
 		val parentsBeta = bcB ++ p(bcB) ++ p(p(bcB))
 		val nBeta = parentsBeta ++ N(parentsBeta)
 
 		val intersection = nAlpha intersect nBeta
 		if(intersection.nonEmpty) {
-			val gammaToDistance = for(gamma <- intersection) yield {
+			val gammaToPath = for(gamma <- intersection) yield {
 				val pathAlpha : List[g.NodeT] = nAlpha.find(_.equals(gamma)).get.breadcrumbs.reverse
 				val pathBeta : List[g.NodeT] = nBeta.find(_.equals(gamma)).get.breadcrumbs
-				val completePath = Util.joinPaths(g)(pathAlpha,  gamma.node :: pathBeta)
-				completePath -> (pathAlpha.size + pathBeta.size + 1)
+				val completeWalk = Util.joinWalks(g)(pathAlpha,  gamma.node :: pathBeta)
+				completeWalk
 			}
-			Some(gammaToDistance.minBy(_._2)._1)
+			val minWalk = gammaToPath.minBy(_.edges.size)
+			// Convert to Path, min walk must be a Path
+			val pBuild = g.newPathBuilder(minWalk.nodes.head)
+			pBuild ++= minWalk.nodes.tail
+			Some(pBuild.result())
 		} else {
 			val possiblePath = ancestorMap.get((alpha.id, beta.id)).map(_.nodes.toSeq).orElse {
 				ancestorMap.get((beta.id,alpha.id)).map(_.nodes.toSeq.reverse)

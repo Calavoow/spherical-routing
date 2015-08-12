@@ -151,6 +151,12 @@ object Util {
 		val nodes = pathNodes.reduce(_ ++ _)
 		val path = g.newPathBuilder(nodes.head)(sizeHint = 64)
 		path ++= nodes
+		path.result()
+	}
+	def joinWalks(g: Graph[Node, UnDiEdge])(pathNodes: Traversable[g.NodeT]*): g.Walk = {
+		val nodes = pathNodes.reduce(_ ++ _)
+		val path = g.newWalkBuilder(nodes.head)(sizeHint = 64)
+		path ++= nodes
 //		val completePath = pathNodes.foldLeft[g.PathBuilder](path) {
 //			case (curPath, joinPath) =>
 //				curPath ++= joinPath
