@@ -80,16 +80,23 @@ object Routing {
 		 * Note: We rely on the fact that on equality of Breadcrumbs, the first in the set is kept in the set,
 		 * so that lowest distant breadcrumbs are kept in the set.
 		 */
-		val parentsAlpha = bcA ++ p(bcA) ++ p(p(bcA))
-		val nAlpha = parentsAlpha ++ N(parentsAlpha)
-		val parentsBeta = bcB ++ p(bcB) ++ p(p(bcB))
-		val nBeta = parentsBeta ++ N(parentsBeta)
+		val dist1Alpha = bcA ++ N(bcA)
+		val dist2Alpha = dist1Alpha ++ N(dist1Alpha)
+		val dist3Alpha = dist2Alpha ++ N(p(p(bcA)))
+//		val parentsAlpha = bcA ++ p(bcA) ++ p(p(bcA))
+//		val nAlpha = parentsAlpha ++ N(parentsAlpha)
+//		val nnAlpha = nAlpha ++ N(nAlpha)
+		val dist1Beta = bcB ++ N(bcB)
+		val dist2Beta = dist1Beta ++ N(p(bcB))
+		val dist3Beta = dist2Beta ++ N(p(p(bcB)))
+//		val parentsBeta = bcB ++ p(bcB) ++ p(p(bcB))
+//		val nBeta = parentsBeta ++ N(parentsBeta)
 
-		val intersection = nAlpha intersect nBeta
+		val intersection = dist3Alpha intersect dist3Beta
 		if(intersection.nonEmpty) {
 			val gammaToPath = for(gamma <- intersection) yield {
-				val pathAlpha : List[g.NodeT] = nAlpha.find(_.equals(gamma)).get.breadcrumbs.reverse
-				val pathBeta : List[g.NodeT] = nBeta.find(_.equals(gamma)).get.breadcrumbs
+				val pathAlpha : List[g.NodeT] = dist3Alpha.find(_.equals(gamma)).get.breadcrumbs.reverse
+				val pathBeta : List[g.NodeT] = dist3Beta.find(_.equals(gamma)).get.breadcrumbs
 				val completeWalk = Util.joinWalks(g)(pathAlpha,  gamma.node :: pathBeta)
 				completeWalk
 			}

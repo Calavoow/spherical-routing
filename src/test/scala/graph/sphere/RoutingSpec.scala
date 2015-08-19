@@ -84,10 +84,10 @@ class RoutingSpec extends FlatSpec with Matchers {
 		}
 	}
 
-	it should "find a shortest path on the face upto 6 divisions" in {
+	it should "find a shortest path on the face upto 7 divisions" in {
 		// Make the three t, nodeMapimes subdivision graph.
 		val graphs = SphereApproximation.repeatedSubdivision(triangle)
-		graphs.take(6).foreach(g => atMostM1Path(g, triangle))
+		graphs.take(8).foreach(g => atMostM1Path(g, triangle))
 	}
 
 	it should "find a shortest path upto 5 divisions" in {
@@ -111,6 +111,82 @@ class RoutingSpec extends FlatSpec with Matchers {
 					assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
 			}
 		}
+	}
+
+	it should "find the shortest path between specific nodes" in {
+		val graph = SphereApproximation.repeatedSubdivision(triangle).drop(5).next()
+
+		val node1 = graph.nodes.find(_.id == 422).get
+		val node2 = graph.nodes.find(_.id == 212).get
+		val shortestPath = node1.shortestPathTo(node2).get
+
+		val ancestorPathMap = Util.allShortestPaths(triangle)
+		val router = Routing.sphereRouter(triangle)(ancestorPathMap)
+		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
+		val outNodes = graph.nodes.toOuterNodes.toSet
+		val node422 = outNodes.find(_.id == 422)
+		val node212 = outNodes.find(_.id == 212)
+		val path = router.route(graph, graph.nodes.size)(node1,node2, nodeMap)
+
+		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
+		assert(path.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${path.nodes}")
+		assert(path.edges.size == shortestPath.edges.size, s"Shortestpath was unequal to shortest route for nodes ($node1, $node2).\n${path.nodes}\n${shortestPath.nodes}")
+	}
+
+	it should "find the shortest path between specific nodes 3" in {
+		val graph = SphereApproximation.repeatedSubdivision(triangle).drop(6).next()
+
+		val node1 = graph.nodes.find(_.id == 39).get
+		val node2 = graph.nodes.find(_.id == 970).get
+		val shortestPath = node1.shortestPathTo(node2).get
+
+		val ancestorPathMap = Util.allShortestPaths(triangle)
+		val router = Routing.sphereRouter(triangle)(ancestorPathMap)
+		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
+		val outNodes = graph.nodes.toOuterNodes.toSet
+		val node422 = outNodes.find(_.id == 39)
+		val node212 = outNodes.find(_.id == 970)
+		val path = router.route(graph, graph.nodes.size)(node1,node2, nodeMap)
+
+		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
+		assert(path.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${path.nodes}")
+		assert(path.edges.size == shortestPath.edges.size, s"Shortestpath was unequal to shortest route for nodes ($node1, $node2).\n${path.nodes}\n${shortestPath.nodes}")
+	}
+
+	it should "find the shortest path between specific nodes 2" in {
+		val graph = SphereApproximation.repeatedSubdivision(triangle).drop(6).next()
+
+		val node1 = graph.nodes.find(_.id == 20).get
+		val node2 = graph.nodes.find(_.id == 1725).get
+		val shortestPath = node1.shortestPathTo(node2).get
+
+		val ancestorPathMap = Util.allShortestPaths(triangle)
+		val router = Routing.sphereRouter(triangle)(ancestorPathMap)
+		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
+		val path = router.route(graph, graph.nodes.size)(node1,node2, nodeMap)
+
+		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
+		assert(path.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${path.nodes}")
+		assert(path.edges.size == shortestPath.edges.size, s"Shortestpath was unequal to shortest route for nodes ($node1, $node2).\n${path.nodes}\n${shortestPath.nodes}")
+	}
+	it should "find the shortest path between specific nodes 4" in {
+		val graph = SphereApproximation.repeatedSubdivision(triangle).drop(2).next()
+
+		val node1 = graph.nodes.find(_.id == 7).get
+		val node2 = graph.nodes.find(_.id == 6).get
+		val shortestPath = node1.shortestPathTo(node2).get
+
+		val ancestorPathMap = Util.allShortestPaths(triangle)
+		val router = Routing.sphereRouter(triangle)(ancestorPathMap)
+		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
+		val outNodes = graph.nodes.toOuterNodes.toSet
+		val node422 = outNodes.find(_.id == 7)
+		val node212 = outNodes.find(_.id == 6)
+		val path = router.route(graph, graph.nodes.size)(node1,node2, nodeMap)
+
+		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
+		assert(path.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${path.nodes}")
+		assert(path.edges.size == shortestPath.edges.size, s"Shortestpath was unequal to shortest route for nodes ($node1, $node2).\n${path.nodes}\n${shortestPath.nodes}")
 	}
 
 	def atMostM1Path(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
@@ -145,5 +221,27 @@ class RoutingSpec extends FlatSpec with Matchers {
 				counter += 1
 		}
 		*/
+	}
+
+	def precisePath(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
+		val combinations = Util.binomCoef(BigInt(g.nodes.size), BigInt(2))
+		val ancestorPathMap = Util.allShortestPaths(g0)
+		val router = Routing.sphereRouter(g0)(ancestorPathMap)
+
+		var counter = 0L
+
+		val nrNodes = g.nodes.size
+		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
+
+		g.nodes.toSeq.combinations(2).foreach {
+			case Seq(node1, node2) =>
+				val shortestPath = node1.shortestPathTo(node2).get
+				val route = router.route(g, nrNodes)(node1, node2, nodeMap)
+				assert(route.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+				assert(route.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+				assert(route.edges.size == shortestPath.edges.size, s"Shortestpath was unequal than shortest route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+				if((counter % 10000L) == 0) println(s"$counter / $combinations")
+				counter += 1
+		}
 	}
 }

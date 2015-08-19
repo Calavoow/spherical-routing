@@ -99,7 +99,7 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 	it should "have a min size 1 and max size of 3 on the icosahedron" in {
 		val gs = SphereApproximation.repeatedSubdivision(Units.icosahedron)
 		gs.take(6).foreach { graph ⇒
-			println("Tesing next subdivision.")
+			println("Testing next subdivision.")
 			graph.nodes.par.foreach{ node ⇒
 				node.label.foreach { labelEl =>
 					assert(labelEl.size >= 1, s"Node had label equal to 0 size: $node")
