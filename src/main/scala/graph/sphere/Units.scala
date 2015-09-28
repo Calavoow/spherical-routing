@@ -13,7 +13,7 @@ object Units {
 		def apply(i: Int) = new SphereNode(i, 0)
 
 		def apply(id: Int, parent1: SphereNode, parent2: SphereNode) = {
-			val layer = Math.max(parent1.layer, parent2.layer)
+			val layer = Math.max(parent1.layer, parent2.layer) + 1
 			new SphereNode(id, layer)
 		}
 
@@ -68,7 +68,7 @@ object Units {
 		*/
 
 		def parents(g: Sphere)(v: g.NodeT) = {
-			v.innerNodeTraverser.withMaxDepth(1).withSubgraph(nodes = _.layer < v.layer)
+			v.innerNodeTraverser.withMaxDepth(1).filter(_.layer < v.layer)
 		}
 
 		implicit object LayeredLabel extends Layered[SphereNode] {

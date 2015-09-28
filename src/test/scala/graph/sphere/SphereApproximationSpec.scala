@@ -42,9 +42,9 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		g1.nodes should contain( SphereNode(1) )
 		g1.nodes should contain( SphereNode(2) )
 		g1.nodes.foreach(println)
-		g1.nodes.find(_.label.last == Set(0,1)) should be('defined)
-		g1.nodes.find(_.label.last == Set(1,2)) should be('defined)
-		g1.nodes.find(_.label.last == Set(0,2)) should be('defined)
+		g1.nodes.exists( node => SphereNode.parents(g1)(node).map(_.id).toSet == Set(0,1) ) should be(true)
+		g1.nodes.exists( node => SphereNode.parents(g1)(node).map(_.id).toSet == Set(1,2) ) should be(true)
+		g1.nodes.exists( node => SphereNode.parents(g1)(node).map(_.id).toSet == Set(0,2) ) should be(true)
 	}
 
 	it should "always divide in the same way" in {
@@ -56,8 +56,8 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 	}
 
 	it should "subdivide a triangle of different layers" in {
-		val node4 = SphereNode(Vector(Set(4),Set(1,2)),1, Some(SphereNode(1), SphereNode(2)))
-		val node5 = SphereNode(Vector(Set(5),Set(1,3)),1, Some(SphereNode(1), SphereNode(3)))
+		val node4 = new SphereNode(4, 1)
+		val node5 = new SphereNode(5, 1)
 		val g = Graph[Node, UnDiEdge](
 			SphereNode(1) ~ node4,
 			SphereNode(1) ~ node5,
@@ -67,11 +67,11 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		g1.nodes.size should equal(6)
 		g1.edges.size should equal(12)
 		g1.nodes should contain( SphereNode(1) )
-		g1.nodes should contain( SphereNode( Vector(Set(4), Set(1,2)), 1, Some(SphereNode(1), SphereNode(2))) )
+		g1.nodes should contain( new SphereNode(4,1) )
 		println(g1)
 		// There must be a node between 1 and 4, but only have 1 as parent.
 		assert(g1.nodes.exists { node ⇒
-			node.layer == 2 && node.label.last.equals(Set(1))
+			node.layer == 2 && SphereNode.parents(g1)(node).exists(_.id == 1)
 		})
 	}
 
@@ -82,7 +82,7 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 			assert(nodes.distinct.size == nodes.size)
 		}
 	}
-
+	/*
 	"The labelling" should "have a min size 1, and max size of 3 on the triangle" in {
 		val gs = SphereApproximation.repeatedSubdivision(Units.triangle)
 		gs.take(7).foreach { graph ⇒
@@ -125,4 +125,5 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 			}
 		}
 	}
+	*/
 }

@@ -75,11 +75,10 @@ class MetricSpec extends FlatSpec with Matchers {
 		val graphSize = g.nodes.size
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(_.id)
 		val pathMap = Util.allShortestPaths(g0)
-		val sphereRouter = sphere.Routing.sphereRouter(g0)(pathMap)
 
-		val route1 = sphereRouter.route(g, graphSize)(n1, n2, nodeMap)
+		val route1 = sphere.Routing.route(g, graphSize)(n1, n2, nodeMap)
 		println(route1)
-		val route2 = sphereRouter.route(g, graphSize)(v1, v2, nodeMap)
+		val route2 = sphere.Routing.route(g, graphSize)(v1, v2, nodeMap)
 		println(route2)
 		val collidingEdge = Metric.collisionEdge(g)(List(route1, route2))
 		assert(collidingEdge.isDefined)
