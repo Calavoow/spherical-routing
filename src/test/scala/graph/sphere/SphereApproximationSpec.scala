@@ -108,4 +108,21 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 			}
 		}
 	}
+
+	it should "not have 2 vertices after 2 vertices in the label" in {
+		val gs = SphereApproximation.repeatedSubdivision(Units.icosahedron)
+		gs.take(6).foreach { graph ⇒
+			println("Testing next subdivision.")
+			graph.nodes.par.foreach{ node ⇒
+				if(node.label.size > 1) {
+					node.label.sliding(2).foreach {
+						case Seq(prevLabel, curLabel) =>
+							if(prevLabel.size == 2) {
+								assert(curLabel.size != 2, s"Two vertices in label after two vertices for node: $node")
+							}
+					}
+				}
+			}
+		}
+	}
 }
