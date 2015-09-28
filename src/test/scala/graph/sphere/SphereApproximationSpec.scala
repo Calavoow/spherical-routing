@@ -12,23 +12,23 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 	"Triangles" should "be correctly found in a triangular graph" in {
 		val g = Units.triangle
 		triangles(g) should equal(Set(
-			Set(Label(0), Label(2), Label(1))
+			Set(SphereNode(0), SphereNode(2), SphereNode(1))
 		))
 	}
 
 	it should "be correctly found in a moderate graph" in {
 		val g = Graph[Node, UnDiEdge](
-			Label(1) ~ Label(2),
-			Label(2) ~ Label(3),
-			Label(3) ~ Label(1),
-			Label(2) ~ Label(4),
-			Label(4) ~ Label(3),
-			Label(1) ~ Label(5)
+			SphereNode(1) ~ SphereNode(2),
+			SphereNode(2) ~ SphereNode(3),
+			SphereNode(3) ~ SphereNode(1),
+			SphereNode(2) ~ SphereNode(4),
+			SphereNode(4) ~ SphereNode(3),
+			SphereNode(1) ~ SphereNode(5)
 		)
 		triangles(g) should equal(
 			Set(
-				Set(Label(1), Label(3), Label(2)),
-				Set(Label(4), Label(3), Label(2))
+				Set(SphereNode(1), SphereNode(3), SphereNode(2)),
+				Set(SphereNode(4), SphereNode(3), SphereNode(2))
 			)
 		)
 	}
@@ -38,9 +38,9 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 		val g1 = SphereApproximation.subdivide(g)
 		g1.nodes.size should equal(6)
 		g1.edges.size should equal(12)
-		g1.nodes should contain( Label(0) )
-		g1.nodes should contain( Label(1) )
-		g1.nodes should contain( Label(2) )
+		g1.nodes should contain( SphereNode(0) )
+		g1.nodes should contain( SphereNode(1) )
+		g1.nodes should contain( SphereNode(2) )
 		g1.nodes.foreach(println)
 		g1.nodes.find(_.label.last == Set(0,1)) should be('defined)
 		g1.nodes.find(_.label.last == Set(1,2)) should be('defined)
@@ -56,18 +56,18 @@ class SphereApproximationSpec extends FlatSpec with Matchers {
 	}
 
 	it should "subdivide a triangle of different layers" in {
-		val node4 = Label(Vector(Set(4),Set(1,2)),1, Some(Label(1), Label(2)))
-		val node5 = Label(Vector(Set(5),Set(1,3)),1, Some(Label(1), Label(3)))
+		val node4 = SphereNode(Vector(Set(4),Set(1,2)),1, Some(SphereNode(1), SphereNode(2)))
+		val node5 = SphereNode(Vector(Set(5),Set(1,3)),1, Some(SphereNode(1), SphereNode(3)))
 		val g = Graph[Node, UnDiEdge](
-			Label(1) ~ node4,
-			Label(1) ~ node5,
+			SphereNode(1) ~ node4,
+			SphereNode(1) ~ node5,
 			node4 ~ node5
 		)
 		val g1 = SphereApproximation.subdivide(g)
 		g1.nodes.size should equal(6)
 		g1.edges.size should equal(12)
-		g1.nodes should contain( Label(1) )
-		g1.nodes should contain( Label( Vector(Set(4), Set(1,2)), 1, Some(Label(1), Label(2))) )
+		g1.nodes should contain( SphereNode(1) )
+		g1.nodes should contain( SphereNode( Vector(Set(4), Set(1,2)), 1, Some(SphereNode(1), SphereNode(2))) )
 		println(g1)
 		// There must be a node between 1 and 4, but only have 1 as parent.
 		assert(g1.nodes.exists { node ⇒

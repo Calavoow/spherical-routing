@@ -1,7 +1,7 @@
 package graph.instrumentation
 
 import graph.Util.{ID, Layered}
-import graph.sphere.Units.Label.{IdLabel, LayeredLabel}
+import graph.sphere.Units.SphereNode.{IdLabel, LayeredLabel}
 import graph.{Util, ring, sphere}
 import graph.ring.Units.{IdNode,LayeredNode}
 import instrumentation.Metric

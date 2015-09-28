@@ -3,7 +3,7 @@ import java.io.{FileWriter, PrintWriter}
 import graph.Util.ID
 import graph.ring.Units.{Ring, LayeredNode, IdNode}
 import graph.sphere.Units.Sphere
-import graph.sphere.Units.Label.LayeredLabel
+import graph.sphere.Units.SphereNode.LayeredLabel
 import graph.{Util, Dot, sphere, ring}
 import instrumentation.Metric
 
@@ -73,7 +73,7 @@ object Main {
 						val sphereCollisions = Metric.randomCollisionCount(g = sphereG,
 								nrLayers = sphereIterations + 1,
 						        concurrentPaths = concurrentPaths,
-						        samples = samples) (sphere.Routing.sphereRouter(g0)(ancestorPathMap))
+						        samples = samples) (sphere.Routing)
 							.map(_.getOrElse(-1))
 						sphereFile.write(s"$sphereNodes,$concurrentPaths,${sphereCollisions.mkString(",")}\n")
 						sphereFile.flush()

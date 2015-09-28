@@ -23,44 +23,44 @@ class RoutingSpec extends FlatSpec with Matchers {
 
 	"Route" should "find a one-hop path" in {
 		val g = Graph[Node, UnDiEdge](
-			Label(1) ~ Label(2),
-			Label(2) ~ Label(3),
-			Label(3) ~ Label(1),
-			Label(2) ~ Label(4),
-			Label(4) ~ Label(3),
-			Label(1) ~ Label(5)
+			SphereNode(1) ~ SphereNode(2),
+			SphereNode(2) ~ SphereNode(3),
+			SphereNode(3) ~ SphereNode(1),
+			SphereNode(2) ~ SphereNode(4),
+			SphereNode(4) ~ SphereNode(3),
+			SphereNode(1) ~ SphereNode(5)
 		)
 
 		val pathMap = Util.allShortestPaths(g)
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
 		val router = Routing.sphereRouter(g)(pathMap)
-		val route = router.route(g, g.nodes.size)(g.get(Label(1)), g.get(Label(5)), nodeMap)
+		val route = router.route(g, g.nodes.size)(g.get(SphereNode(1)), g.get(SphereNode(5)), nodeMap)
 
-		route.nodes.toList should be(List(Label(1), Label(5)))
-		route.edges.toList should be(List(Label(1) ~ Label(5)))
+		route.nodes.toList should be(List(SphereNode(1), SphereNode(5)))
+		route.edges.toList should be(List(SphereNode(1) ~ SphereNode(5)))
 	}
 
 	it should "find a two-hop-path" in {
 		val g = Graph[Node, UnDiEdge](
-			Label(1) ~ Label(2),
-			Label(2) ~ Label(3),
-			Label(3) ~ Label(1),
-			Label(2) ~ Label(4),
-			Label(4) ~ Label(3),
-			Label(1) ~ Label(5)
+			SphereNode(1) ~ SphereNode(2),
+			SphereNode(2) ~ SphereNode(3),
+			SphereNode(3) ~ SphereNode(1),
+			SphereNode(2) ~ SphereNode(4),
+			SphereNode(4) ~ SphereNode(3),
+			SphereNode(1) ~ SphereNode(5)
 		)
 
 		val pathMap = Util.allShortestPaths(g)
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
 		val router = Routing.sphereRouter(g)(pathMap)
-		val route = router.route(g, g.nodes.size)(g.get(Label(1)), g.get(Label(4)), nodeMap)
+		val route = router.route(g, g.nodes.size)(g.get(SphereNode(1)), g.get(SphereNode(4)), nodeMap)
 
-		route.nodes.toList should (equal (List(Label(1), Label(3), Label(4)))
-			or equal (List(Label(1), Label(2), Label(4))))
-		route.edges.toList should (equal (List(Label(1) ~ Label(3), Label(3) ~ Label(4)))
-			or equal (List(Label(1) ~ Label(2), Label(2) ~ Label(4))))
+		route.nodes.toList should (equal (List(SphereNode(1), SphereNode(3), SphereNode(4)))
+			or equal (List(SphereNode(1), SphereNode(2), SphereNode(4))))
+		route.edges.toList should (equal (List(SphereNode(1) ~ SphereNode(3), SphereNode(3) ~ SphereNode(4)))
+			or equal (List(SphereNode(1) ~ SphereNode(2), SphereNode(2) ~ SphereNode(4))))
 	}
 
 	it should "find the same path 100 times" in {

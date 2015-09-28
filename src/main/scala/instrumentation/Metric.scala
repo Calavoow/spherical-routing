@@ -20,7 +20,7 @@ object Metric {
 
 	def countRoutingPaths(g: Graph[sphere.Units.Node, UnDiEdge], g0: Graph[sphere.Units.Node, UnDiEdge], nrLayers: Int)
 	                     (ancestorRouteMap: Map[(Int, Int),g0.Path]): Map[Int, Int] = {
-		countPaths(g, nrLayers)(sphere.Routing.sphereRouter(g0)(ancestorRouteMap))
+		countPaths(g, nrLayers)(sphere.Routing)
 	}
 
 	/**

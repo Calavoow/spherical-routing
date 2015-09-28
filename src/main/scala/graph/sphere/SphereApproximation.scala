@@ -38,12 +38,12 @@ object SphereApproximation {
 	def subdivide(g: Graph[Node, UnDiEdge]) : Graph[Node, UnDiEdge] = {
 		// Calculate the current max label ID, and iteration number.
 		val currentMaxLabel = g.nodes.map(_.id).max
-		val iteration = g.nodes.map(_.label.size).max - 1
+		val prevLayer = g.nodes.map(_.layer).max
 
 		// Find the edges that will be subdivided.
 		val subdivisionEdges = g.edges.filter { edge ⇒
 			edge.nodes.exists { node ⇒
-				node.layer == iteration
+				node.layer == prevLayer
 			}
 		}
 		// Calculate which labels the new nodes should get.
@@ -53,7 +53,7 @@ object SphereApproximation {
 		val newEdges = subdivisionEdges.flatMap { edge ⇒
 			val currentLabel = newLabels(edge)
 			// Collect the two triangles that have at least two nodes in common with the edge.
-			val relTri = relevantTriangles(g)(edge, iteration)
+			val relTri = relevantTriangles(g)(edge, prevLayer)
 
 			// Find the labels of the edges between the triangle nodes
 			val toLabels = (for(relevantTriangle ← relTri;
@@ -64,7 +64,7 @@ object SphereApproximation {
 				newLabels(edge)
 			}).-(currentLabel) // Do not create an edge to the node itself.
 
-			val parentLabels = edge.nodes.toOuterNodes.toSet[Label]
+			val parentLabels = edge.nodes.toOuterNodes.toSet[SphereNode]
 			val allLabels = toLabels ++ parentLabels
 
 			// Make an edge to every vertex it should be connected to.
@@ -84,12 +84,12 @@ object SphereApproximation {
 	 * @param currentMaxID The current maximum id.
 	 * @return A mapping from edge to label.
 	 */
-	def edgeLabels(g: Graph[Node, UnDiEdge])(edges: Iterable[g.EdgeT], currentMaxID: Int): Map[g.EdgeT, Label] = {
+	def edgeLabels(g: Graph[Node, UnDiEdge])(edges: Iterable[g.EdgeT], currentMaxID: Int): Map[g.EdgeT, SphereNode] = {
 		// Add a unique label to each edge.
-		val nodes = g.nodes.toOuterNodes.toSet[Label]
+		val nodes = g.nodes.toOuterNodes.toSet[SphereNode]
 		(for ((edge, index) <- edges.zipWithIndex) yield {
 			val p1 :: p2 :: _ = edge.nodes.toList
-			edge → Label(p1, p2, currentMaxID + index + 1, nodes)
+			edge → SphereNode(currentMaxID + index + 1, p1, p2)
 		}).toMap
 	}
 

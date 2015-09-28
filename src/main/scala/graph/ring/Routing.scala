@@ -11,7 +11,7 @@ import Units._
 import graph.Util.TwoPower
 
 object Routing extends Router[Node] {
-		override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(from: g.NodeT, to: g.NodeT, nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
+	override def route(g: Ring, graphSize: Int)(from: g.NodeT, to: g.NodeT, nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
 		Random.setSeed(System.currentTimeMillis())
 		/**
 		 * Recursively fill the steps towards a common node.
@@ -48,8 +48,9 @@ object Routing extends Router[Node] {
 	}
 
 
-	private def step(g : Graph[Node, UnDiEdge], n: Int)(head: g.NodeT, iteration: Int) : g.NodeT = {
+	private def step(g : Graph[Node, UnDiEdge], abcdef: Int)(head: g.NodeT, iteration: Int) : g.NodeT = {
 		val twoIMinusOne = (iteration-1).twoPowerOf
+		val n = g.nodes.size
 		// Explicitly get Int values, needed to perform Integer addition and not String concatenation.
 		val headIndex : Int = head
 		if(head % iteration.twoPowerOf == 0) {

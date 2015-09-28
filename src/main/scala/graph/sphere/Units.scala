@@ -9,8 +9,13 @@ import scalax.collection.immutable.Graph
 object Units {
 	type Sphere = Graph[Node, UnDiEdge]
 
-	object Label {
-		def apply(i: Int) = new Label(Vector(Set(i)), 0, None)
+	object SphereNode {
+		def apply(i: Int) = new SphereNode(i, 0)
+
+		def apply(id: Int, parent1: SphereNode, parent2: SphereNode) = {
+			val layer = Math.max(parent1.layer, parent2.layer)
+			new SphereNode(id, layer)
+		}
 
 		/**
 		 * Construct a label given two parents and an ID.
@@ -22,6 +27,7 @@ object Units {
 		 * @param id The ID.
 		 * @return A new Label instance, with the label properly filtered.
 		 */
+		/*
 		def apply(parent1: Label, parent2: Label, id: Int, nodes : Set[Label]) = {
 			// Zip both labels, until one of the labels reaches the base graph.
 			val unfilteredLabel = parent1.label.zip(parent2.label).map {
@@ -45,17 +51,6 @@ object Units {
 					}
 					(nonSimpleVertices :: filteredEls, prefixUnion union unfilteredEl)
 			}._1.reverse
-//			println(filteredLabel)
-//			val filteredLabel = unfilteredLabel.zip(prefixUnion).map {
-//				case (unfilteredEl, prefixSet) ⇒
-//					val removedDuplicates = unfilteredEl -- prefixSet
-//					val vertices: Set[Label] = nodes.filter(n => removedDuplicates.contains(n.id))
-//					vertices.filterNot { vertex =>
-//						// Neither parent must already be in the label, nor in the current label.
-//						val (p1, p2) = vertex.parents
-//						prefixSet(p1.id) || prefixSet(p2.id) || removedDuplicates(p1.id) || removedDuplicates(p2.id)
-//					}
-//			}
 
 			// Remove non-simple vertices that do not have a parent in the label
 			val filterNoParents = filteredLabel.scanRight(nodes){
@@ -70,16 +65,20 @@ object Units {
 //			println(filterNoParents)
 			new Label(Set(id) +: filterNoParents.map(_.map(_.id)), parent1.layer.max(parent2.layer) + 1, Some(parent1, parent2))
 		}
+		*/
 
+		def parents(g: Sphere)(v: g.NodeT) = {
+			v.innerNodeTraverser.withMaxDepth(1).withSubgraph(nodes = _.layer < v.layer)
+		}
 
-		implicit object LayeredLabel extends Layered[Label] {
-			def layer(x: Label, nrLayers: Int) = {
+		implicit object LayeredLabel extends Layered[SphereNode] {
+			def layer(x: SphereNode, nrLayers: Int) = {
 				// nrLayers - 1 - x.layer
 				x.layer
 			}
 		}
-		implicit object IdLabel extends ID[Label] {
-			override def id(x: Label) : Int = x.id
+		implicit object IdLabel extends ID[SphereNode] {
+			override def id(x: SphereNode) : Int = x.id
 		}
 	}
 
@@ -90,77 +89,65 @@ object Units {
 	 * This recursive label is filtered in such a way that at index k, you can find a set of ids of nodes
 	 * that can be routed towards if you are on layer k.
 	 * This is also used to easily find the closest common ancestor.
-	 * @param label The label of this node.
 	 */
-	case class Label(label: IndexedSeq[Set[Int]], layer: Int, parents: Option[(Label, Label)]) {
-		/**
-		 * The id of this node.
-		 *
-		 * Equivalent to the last element of the label.
-		 */
-		lazy val id = label.head.head
-
+	case class SphereNode(id: Int, layer: Int) {
 		override def toString = {
-			"[" + label.map(_.mkString("{", ",", "}")).mkString(",") + "]_" + layer
-		}
-
-		override def hashCode : Int = {
-			id.hashCode()
+			s"${id}_$layer"
 		}
 
 		override def equals(other: Any): Boolean = other match {
-			case that : Label => that.id == id
+			case that : SphereNode => that.id == id
 			case _ => false
 		}
 	}
 
-	type Node = Label
+	type Node = SphereNode
 	/**
 	 * The icosahedron manually encoded as a Graph object.
 	 */
 	val icosahedron = Graph[Node, UnDiEdge](
 		// Outer nodes
-		Label(0) ~ Label(1),
-		Label(0) ~ Label(2),
-		Label(0) ~ Label(3),
-		Label(0) ~ Label(4),
-		Label(0) ~ Label(5),
-		Label(11) ~ Label(6),
-		Label(11) ~ Label(7),
-		Label(11) ~ Label(8),
-		Label(11) ~ Label(9),
-		Label(11) ~ Label(10),
+		SphereNode(0) ~ SphereNode(1),
+		SphereNode(0) ~ SphereNode(2),
+		SphereNode(0) ~ SphereNode(3),
+		SphereNode(0) ~ SphereNode(4),
+		SphereNode(0) ~ SphereNode(5),
+		SphereNode(11) ~ SphereNode(6),
+		SphereNode(11) ~ SphereNode(7),
+		SphereNode(11) ~ SphereNode(8),
+		SphereNode(11) ~ SphereNode(9),
+		SphereNode(11) ~ SphereNode(10),
 		// Inner nodes horizontal
-		Label(1) ~ Label(2),
-		Label(2) ~ Label(3),
-		Label(3) ~ Label(4),
-		Label(4) ~ Label(5),
-		Label(5) ~ Label(1),
-		Label(6) ~ Label(7),
-		Label(7) ~ Label(8),
-		Label(8) ~ Label(9),
-		Label(9) ~ Label(10),
-		Label(10) ~ Label(6),
+		SphereNode(1) ~ SphereNode(2),
+		SphereNode(2) ~ SphereNode(3),
+		SphereNode(3) ~ SphereNode(4),
+		SphereNode(4) ~ SphereNode(5),
+		SphereNode(5) ~ SphereNode(1),
+		SphereNode(6) ~ SphereNode(7),
+		SphereNode(7) ~ SphereNode(8),
+		SphereNode(8) ~ SphereNode(9),
+		SphereNode(9) ~ SphereNode(10),
+		SphereNode(10) ~ SphereNode(6),
 		// Inner nodes vertical forward
-		Label(1) ~ Label(6),
-		Label(2) ~ Label(7),
-		Label(3) ~ Label(8),
-		Label(4) ~ Label(9),
-		Label(5) ~ Label(10),
+		SphereNode(1) ~ SphereNode(6),
+		SphereNode(2) ~ SphereNode(7),
+		SphereNode(3) ~ SphereNode(8),
+		SphereNode(4) ~ SphereNode(9),
+		SphereNode(5) ~ SphereNode(10),
 		// Inner nodes vertical backward
-		Label(1) ~ Label(10),
-		Label(2) ~ Label(6),
-		Label(3) ~ Label(7),
-		Label(4) ~ Label(8),
-		Label(5) ~ Label(9)
+		SphereNode(1) ~ SphereNode(10),
+		SphereNode(2) ~ SphereNode(6),
+		SphereNode(3) ~ SphereNode(7),
+		SphereNode(4) ~ SphereNode(8),
+		SphereNode(5) ~ SphereNode(9)
 	)
 
 	/**
 	 * The triangle encoded as a graph object.
 	 */
 	val triangle = Graph[Node, UnDiEdge](
-		Label(0) ~ Label(1),
-		Label(1) ~ Label(2),
-		Label(2) ~ Label(0)
+		SphereNode(0) ~ SphereNode(1),
+		SphereNode(1) ~ SphereNode(2),
+		SphereNode(2) ~ SphereNode(0)
 	)
 }

@@ -10,35 +10,59 @@ import scalax.collection.GraphEdge._
 import scalax.collection.immutable.Graph
 import Units._
 
-object Routing {
-	def path(g: Sphere, g0: Sphere)(alpha: g.NodeT, beta: g.NodeT, ancestorMap: Map[(Int, Int), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
-		pathRecursive(g, g0)(alpha, beta, List.empty, List.empty, ancestorMap, nodeMap)
+object Routing extends Router[Node] {
+	override def route(g: Sphere, graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path = {
+		pathRecursive(g)(node1, node2, List.empty, List.empty)
 	}
 
 	@tailrec
-	def pathRecursive(g: Sphere, g0: Sphere)(alpha: g.NodeT, beta: g.NodeT, pathA: List[g.NodeT], pathB: List[g.NodeT],
-		ancestorMap: Map[(Int, Int), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
-		val p6 = path6(g, g0)(alpha, beta, ancestorMap, nodeMap)
-		p6 match {
+	def pathRecursive(g: Sphere)(alpha: g.NodeT, beta: g.NodeT, pathA: List[g.NodeT], pathB: List[g.NodeT]) : g.Path = {
+		val localPath = localSearch(g)(alpha, beta)
+		localPath match {
 			case Some(pab) =>
 				val joinedPaths = Util.joinPaths(g)((alpha :: pathA).reverse, pab.nodes, beta :: pathB)
 				joinedPaths
 			case None =>
-				def stepDown(v : g.NodeT) : g.NodeT = {
-					val labelSeq = v.label(1).toIndexedSeq
-					val vNewID = labelSeq(Random.nextInt(labelSeq.size))
-					// val vNewID = v.label(1).head
-					nodeMap(vNewID)
-				}
 				if(beta.layer > alpha.layer) {
-					pathRecursive(g, g0)(alpha, stepDown(beta), pathA, beta :: pathB, ancestorMap, nodeMap)
+					pathRecursive(g)(alpha, incrementPath(g)(beta), pathA, beta :: pathB)
 				} else {
-					pathRecursive(g, g0)(stepDown(alpha), beta, alpha :: pathA, pathB, ancestorMap, nodeMap)
+					pathRecursive(g)(incrementPath(g)(alpha), beta, alpha :: pathA, pathB)
 				}
 		}
 	}
 
-	def path6(g: Sphere, g0: Sphere)(alpha : g.NodeT, beta: g.NodeT, ancestorMap: Map[(Int, Int), g0.Path], nodeMap: IndexedSeq[g.NodeT]) : Option[g.Path] = {
+	def incrementPath(g: Sphere)(v: g.NodeT) : g.NodeT = {
+		def pGood(vertices: Set[g.NodeT]): Set[g.NodeT] = {
+			val parents = vertices.flatMap{ alpha =>
+				SphereNode.parents(g)(alpha).toSet
+			}
+
+			// Each parent must be on the lowest layer of all parents.
+			parents.filter( _.layer <= parents.map(_.layer).max )
+		}
+
+		val bSet = pGood(Set(v))
+
+		// calculate f(aSet)
+		val potentialParents = if(bSet.head.layer == 0) {
+			bSet
+		} else {
+			val bSetGood = pGood(bSet)
+			bSet.filter { beta =>
+				val betaP = SphereNode.parents(g)(beta).toSet
+				// Check whether p(beta) intersect pGood(bSet) is nonEmpty
+				(betaP intersect bSetGood).nonEmpty
+			}
+		}
+
+		// Pick a random element
+		Random.shuffle(potentialParents.toSeq).head
+	}
+
+	def localSearch(g: Sphere)(alpha : g.NodeT, beta: g.NodeT) : Option[g.Path] = {
+		val nAlpha = alpha.withMaxDepth(6)
+		nAlpha.find(_ == beta).flatMap(_ => alpha.shortestPathTo(beta))
+		/*
 		case class Breadcrumb(node : g.NodeT, breadcrumbs: List[g.NodeT] = List.empty) {
 			def :: (newHead: g.NodeT) : Breadcrumb = Breadcrumb(newHead, node :: breadcrumbs)
 
@@ -118,14 +142,8 @@ object Routing {
 				builder.++=(gNodes.tail).result()
 			}
 		}
+		*/
 	}
 
-	def sphereRouter(g0: Sphere)(ancestorMap: Map[(Int, Int), g0.Path]): Router[Node] = {
-		new Router[Node] {
-			override def route(g: Graph[Node, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path = {
-				Routing.path(g = g, g0 = g0)(node1, node2, ancestorMap, nodeMap)
-			}
-		}
-	}
 }
 
