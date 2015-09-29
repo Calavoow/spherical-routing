@@ -127,11 +127,11 @@ object Util {
 		}
 	}
 
-	def allShortestPaths[N : ID](g: Graph[N,UnDiEdge]) : Map[(Int, Int), g.Path] = {
-		g.nodes.toSeq.combinations(2).map {
-			case Seq(node1, node2) ⇒ (implicitly[ID[N]].id(node1), implicitly[ID[N]].id(node2)) → node1.shortestPathTo(node2).get
-		}.toMap
-	}
+//	def allShortestPaths[N : ID](g: Graph[N,UnDiEdge]) : Map[(Int, Int), g.Path] = {
+//		g.nodes.toSeq.combinations(2).map {
+//			case Seq(node1, node2) ⇒ (implicitly[ID[N]].id(node1), implicitly[ID[N]].id(node2)) → node1.shortestPathTo(node2).get
+//		}.toMap
+//	}
 
 	def factorial[T: Numeric](n: T) = recursiveFactorial(n, implicitly[Numeric[T]].fromInt(1))
 	@tailrec

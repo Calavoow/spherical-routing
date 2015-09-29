@@ -99,6 +99,8 @@ object Units {
 			case that : SphereNode => that.id == id
 			case _ => false
 		}
+
+		override def hashCode(): Int = id.hashCode()
 	}
 
 	type Node = SphereNode

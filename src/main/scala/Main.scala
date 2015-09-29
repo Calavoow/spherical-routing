@@ -35,8 +35,6 @@ object Main {
 
 		val g0 = sphere.Units.icosahedron
 		val samples = 10000
-		val ancestorPathMap = Util.allShortestPaths(g0)
-
 
 		val rings : Iterator[Ring] = Iterator.from(0).map { i ⇒
 			println("Subdividing ring")
@@ -52,7 +50,6 @@ object Main {
 		val graphs : Iterator[((Ring, Int), (Sphere, Int))] = rings.zipWithIndex.drop(3)
 			.grouped(2).map(_.head) // Drop every second Ring
 			.zip(spheres.zipWithIndex.drop(1)) // Zip with the spheres, dropping the first.
-//			.drop(7) // Drop the first couple for profiling.
 		try {
 			graphs.foreach {
 				case ((ringG, ringIterations), (sphereG, sphereIterations)) ⇒

@@ -74,7 +74,6 @@ class MetricSpec extends FlatSpec with Matchers {
 
 		val graphSize = g.nodes.size
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(_.id)
-		val pathMap = Util.allShortestPaths(g0)
 
 		val route1 = sphere.Routing.route(g, graphSize)(n1, n2, nodeMap)
 		println(route1)

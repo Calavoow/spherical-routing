@@ -58,35 +58,4 @@ object ShortestPaths {
 			(node1,node2) -> distance
 		}).toMap
 	}
-
-	case class InfInteger(i : Option[Int])
-
-	implicit object InfIntegerIsNumeric extends Numeric[InfInteger] {
-		override def plus(x: InfInteger, y: InfInteger): InfInteger = InfInteger( for(xi <- x.i; yi <- y.i) yield { xi + yi } )
-
-		override def toDouble(x: InfInteger): Double = ???
-
-		override def toFloat(x: InfInteger): Float = ???
-
-		override def toInt(x: InfInteger): Int = ???
-
-		override def negate(x: InfInteger): InfInteger = x.copy(i = x.i.map(xi => -xi))
-
-		override def fromInt(x: Int): InfInteger = InfInteger(Some(x))
-
-		override def toLong(x: InfInteger): Long = ???
-
-		override def times(x: InfInteger, y: InfInteger): InfInteger = ???
-
-		override def minus(x: InfInteger, y: InfInteger): InfInteger = InfInteger(for(xi <- x.i; yi <- y.i) yield { xi - yi })
-
-		override def compare(x: InfInteger, y: InfInteger): Int = {
-			(x,y) match {
-				case (InfInteger(None), InfInteger(None)) => 0
-				case (InfInteger(None), _) => 1
-				case (_, InfInteger(None)) => -1
-				case (InfInteger(Some(xi)), InfInteger(Some(yi))) => xi.compareTo(yi)
-			}
-		}
-	}
 }

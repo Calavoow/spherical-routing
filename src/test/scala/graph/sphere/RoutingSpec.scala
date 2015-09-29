@@ -31,7 +31,6 @@ class RoutingSpec extends FlatSpec with Matchers {
 			SphereNode(1) ~ SphereNode(5)
 		)
 
-		val pathMap = Util.allShortestPaths(g)
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
 		val route = Routing.route(g, g.nodes.size)(g.get(SphereNode(1)), g.get(SphereNode(5)), nodeMap)
@@ -50,7 +49,6 @@ class RoutingSpec extends FlatSpec with Matchers {
 			SphereNode(1) ~ SphereNode(5)
 		)
 
-		val pathMap = Util.allShortestPaths(g)
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
 		val route = Routing.route(g, g.nodes.size)(g.get(SphereNode(1)), g.get(SphereNode(4)), nodeMap)
@@ -62,7 +60,6 @@ class RoutingSpec extends FlatSpec with Matchers {
 	}
 
 	it should "find the same path 100 times" in {
-		val pathMap = Util.allShortestPaths(triangle)
 		val paths = for(_ <- 1 to 100) yield {
 			val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
 			val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
@@ -81,20 +78,39 @@ class RoutingSpec extends FlatSpec with Matchers {
 		}
 	}
 
+	it should "find an equivalent path 10000 times in parellel" in {
+		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
+		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
+
+		val node1 = g.nodes.find(_.id == 29).get
+		val node2 = g.nodes.find(_.id == 16).get
+		val shortestPath = node1.shortestPathTo(node2).get
+
+		(1 until 10000).par.foreach { _ =>
+				val route = Routing.route(g, g.nodes.size)(node1, node2, nodeMap)
+				route.edges.size should equal(shortestPath.edges.size)
+		}
+	}
+
 	it should "find a shortest path on the face upto 7 divisions" in {
 		// Make the three t, nodeMapimes subdivision graph.
 		val graphs = SphereApproximation.repeatedSubdivision(triangle)
-		graphs.take(8).foreach(g => atMostM1Path(g, triangle))
+		graphs.zipWithIndex.take(8).foreach{ case (g, index) =>
+			println(s"Testing triangle with $index subdivisions.")
+			shortestPaths(g, triangle)
+		}
 	}
 
 	it should "find a shortest path upto 5 divisions" in {
 		val graphs = SphereApproximation.repeatedSubdivision(icosahedron)
-		graphs.take(5).foreach(g => atMostM1Path(g, icosahedron))
+		graphs.zipWithIndex.take(5).foreach { case(g,index) =>
+			println(s"Testing sphere with $index subdivisions.")
+			shortestPaths(g, icosahedron)
+		}
 	}
 
 	it should "find the shortest path on the face between 7-8 divisions with random sampling" in {
 		val graphs = SphereApproximation.repeatedSubdivision(triangle)
-		val pathMap = Util.allShortestPaths(triangle)
 		Random.setSeed(System.currentTimeMillis())
 		graphs.drop(5).take(2).foreach { g =>
 			val nrNodes = g.nodes.size
@@ -116,11 +132,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val node2 = graph.nodes.find(_.id == 212).get
 		val shortestPath = node1.shortestPathTo(node2).get
 
-		val ancestorPathMap = Util.allShortestPaths(triangle)
 		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-		val outNodes = graph.nodes.toOuterNodes.toSet
-		val node422 = outNodes.find(_.id == 422)
-		val node212 = outNodes.find(_.id == 212)
 		val path = Routing.route(graph, graph.nodes.size)(node1,node2, nodeMap)
 
 		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
@@ -135,11 +147,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val node2 = graph.nodes.find(_.id == 970).get
 		val shortestPath = node1.shortestPathTo(node2).get
 
-		val ancestorPathMap = Util.allShortestPaths(triangle)
 		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-		val outNodes = graph.nodes.toOuterNodes.toSet
-		val node422 = outNodes.find(_.id == 39)
-		val node212 = outNodes.find(_.id == 970)
 		val path = Routing.route(graph, graph.nodes.size)(node1,node2, nodeMap)
 
 		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
@@ -154,7 +162,6 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val node2 = graph.nodes.find(_.id == 1725).get
 		val shortestPath = node1.shortestPathTo(node2).get
 
-		val ancestorPathMap = Util.allShortestPaths(triangle)
 		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 		val path = Routing.route(graph, graph.nodes.size)(node1,node2, nodeMap)
 
@@ -169,11 +176,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val node2 = graph.nodes.find(_.id == 6).get
 		val shortestPath = node1.shortestPathTo(node2).get
 
-		val ancestorPathMap = Util.allShortestPaths(triangle)
 		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-		val outNodes = graph.nodes.toOuterNodes.toSet
-		val node422 = outNodes.find(_.id == 7)
-		val node212 = outNodes.find(_.id == 6)
 		val path = Routing.route(graph, graph.nodes.size)(node1,node2, nodeMap)
 
 		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
@@ -181,42 +184,40 @@ class RoutingSpec extends FlatSpec with Matchers {
 		assert(path.edges.size == shortestPath.edges.size, s"Shortestpath was unequal to shortest route for nodes ($node1, $node2).\n${path.nodes}\n${shortestPath.nodes}")
 	}
 
-	def atMostM1Path(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
-//		val combinations = Util.binomCoef(BigInt(g.nodes.size), BigInt(2))
-		val ancestorPathMap = Util.allShortestPaths(g0)
+	it should "find the shortest path between specific nodes 5" in {
+		val graph = SphereApproximation.repeatedSubdivision(triangle).drop(5).next()
 
+		val node1 = graph.nodes.find(_.id == 167).get
+		val node2 = graph.nodes.find(_.id == 262).get
+		val shortestPath = node1.shortestPathTo(node2).get
+
+		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
+		val path = Routing.route(graph, graph.nodes.size)(node1,node2, nodeMap)
+
+		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
+		assert(path.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${path.nodes}")
+		assert(path.edges.size == shortestPath.edges.size, s"Shortestpath was unequal to shortest route for nodes ($node1, $node2).\n${path.nodes}\n${shortestPath.nodes}")
+	}
+
+	def shortestPaths(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
 		var counter = 0L
 
 		val nrNodes = g.nodes.size
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
 		val shortestPaths = ShortestPaths.allDistances(g)
-		for(((node1,node2), shortestDistance) <- shortestPaths) {
+		shortestPaths.par.foreach { case ((node1, node2), shortestDistance) =>
 			val route = Routing.route(g, nrNodes)(node1, node2, nodeMap)
 			assert(route.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${route.nodes}")
 			assert(route.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${route.nodes}")
 			assert(route.edges.size == shortestDistance, s"Shortestpath was unequal to shortest route for nodes ($node1, $node2).\n${route.nodes}")
 			if((counter % 10000L) == 0) println(s"$counter / ${shortestPaths.size}")
 			counter += 1
-
 		}
-		/*
-		g.nodes.toSeq.combinations(2).foreach {
-			case Seq(node1, node2) =>
-				val shortestPath = node1.shortestPathTo(node2).get
-				val route = router.route(g, nrNodes)(node1, node2, nodeMap)
-				assert(route.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
-				assert(route.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
-				assert(route.edges.size == shortestPath.edges.size, s"Shortestpath was unequal than shortest route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
-				if((counter % 10000L) == 0) println(s"$counter / $combinations")
-				counter += 1
-		}
-		*/
 	}
 
 	def precisePath(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
 		val combinations = Util.binomCoef(BigInt(g.nodes.size), BigInt(2))
-		val ancestorPathMap = Util.allShortestPaths(g0)
 
 		var counter = 0L
 

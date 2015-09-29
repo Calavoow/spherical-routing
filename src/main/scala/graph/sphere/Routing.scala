@@ -4,6 +4,7 @@ import graph.Util
 import instrumentation.Metric.Router
 
 import scala.annotation.tailrec
+import scala.collection.immutable.Queue
 import scala.language.postfixOps
 import scala.util.Random
 import scalax.collection.GraphEdge._
@@ -38,7 +39,7 @@ object Routing extends Router[Node] {
 			}
 
 			// Each parent must be on the lowest layer of all parents.
-			parents.filter( _.layer <= parents.map(_.layer).max )
+			parents.filter( _.layer <= parents.map(_.layer).min )
 		}
 
 		val bSet = pGood(Set(v))
@@ -60,89 +61,40 @@ object Routing extends Router[Node] {
 	}
 
 	def localSearch(g: Sphere)(alpha : g.NodeT, beta: g.NodeT) : Option[g.Path] = {
-		val nAlpha = alpha.withMaxDepth(6)
-		nAlpha.find(_ == beta).flatMap(_ => alpha.shortestPathTo(beta))
-		/*
-		case class Breadcrumb(node : g.NodeT, breadcrumbs: List[g.NodeT] = List.empty) {
-			def :: (newHead: g.NodeT) : Breadcrumb = Breadcrumb(newHead, node :: breadcrumbs)
-
-			/**
-			 * Provide methods so that breadcrumbs are put into a set like the ID of the [[node]] field.
-			 **/
-			override def hashCode(): Int = node.id.hashCode()
-			override def equals(obj: scala.Any): Boolean = obj match {
-				case b: Breadcrumb => b.node.id == node.id
-				case _ => false
-			}
+		val pathNodes = dijkstra6(g)(Queue(List(alpha)), beta, Set.empty[g.NodeT])
+		pathNodes.map { nodes =>
+			val builder = g.newPathBuilder(alpha)
+			builder ++= nodes
+			builder.result()
 		}
+	}
 
-		def p(breadcrumbs : Set[Breadcrumb]) : Set[Breadcrumb] = {
-			(for(breadcrumb <- breadcrumbs) yield {
-				breadcrumb.node.parents.map { ps =>
-					val p1 = nodeMap(ps._1.id) :: breadcrumb
-					val p2 = nodeMap(ps._2.id) :: breadcrumb
-					Set(p1, p2)
-				}.getOrElse(Set.empty)
-			}).flatten
-		}
-
-		def N(breadcrumbs : Set[Breadcrumb]) : Seq[Breadcrumb] = {
-			// Start with shortest breadcrumbs first.
-			val sorted = breadcrumbs.toSeq.sortBy(_.breadcrumbs.size)
-			for(
-				breadcrumb <- sorted;
-				neighNode <- breadcrumb.node.neighbors
-			) yield {
-				neighNode :: breadcrumb
-			}
-		}
-
-		val bcA = Set(Breadcrumb(alpha))
-		val bcB = Set(Breadcrumb(beta))
-
-		/**
-		 * Note: We rely on the fact that on equality of Breadcrumbs, the first in the set is kept in the set,
-		 * so that lowest distant breadcrumbs are kept in the set.
-		 */
-		val dist1Alpha = bcA ++ N(bcA)
-		val dist2Alpha = dist1Alpha ++ N(dist1Alpha)
-		val dist3Alpha = dist2Alpha ++ N(p(p(bcA)))
-//		val parentsAlpha = bcA ++ p(bcA) ++ p(p(bcA))
-//		val nAlpha = parentsAlpha ++ N(parentsAlpha)
-//		val nnAlpha = nAlpha ++ N(nAlpha)
-		val dist1Beta = bcB ++ N(bcB)
-		val dist2Beta = dist1Beta ++ N(p(bcB))
-		val dist3Beta = dist2Beta ++ N(p(p(bcB)))
-//		val parentsBeta = bcB ++ p(bcB) ++ p(p(bcB))
-//		val nBeta = parentsBeta ++ N(parentsBeta)
-
-		val intersection = dist3Alpha intersect dist3Beta
-		if(intersection.nonEmpty) {
-			val gammaToPath = for(gamma <- intersection) yield {
-				val pathAlpha : List[g.NodeT] = dist3Alpha.find(_.equals(gamma)).get.breadcrumbs.reverse
-				val pathBeta : List[g.NodeT] = dist3Beta.find(_.equals(gamma)).get.breadcrumbs
-				val completeWalk = Util.joinWalks(g)(pathAlpha,  gamma.node :: pathBeta)
-				completeWalk
-			}
-			val minWalk = gammaToPath.minBy(_.edges.size)
-			// Convert to Path, min walk must be a Path
-			val pBuild = g.newPathBuilder(minWalk.nodes.head)
-			pBuild ++= minWalk.nodes.tail
-			Some(pBuild.result())
+	/**
+	 * Dijkstra's algorithm limited to 6 hops.
+	 *
+	 * We assume that the graph is connected.
+	 *
+	 * @param g The graph.
+	 * @param q The queue of paths to visit.
+	 * @param dest The destination node.
+	 * @param visited A set of nodes that have already been visited.
+	 * @return Some path of nodes, or None if there is no path of less than 6.
+	 */
+	@tailrec
+	def dijkstra6(g: Sphere)(q: Queue[List[g.NodeT]], dest: g.NodeT, visited: Set[g.NodeT]) : Option[List[g.NodeT]] = {
+		val (path, poppedQ) = q.dequeue
+		if (path.size > 7) {
+			// Paths include start node, so 6 hops is 7 nodes.
+			// Stop as soon as we start processing paths of more than 6 hops.
+			None
+		} else if(path.head == dest) {
+			Some(path.reverse)
 		} else {
-			val possiblePath = ancestorMap.get((alpha.id, beta.id)).map(_.nodes.toSeq).orElse {
-				ancestorMap.get((beta.id,alpha.id)).map(_.nodes.toSeq.reverse)
-			}
-			possiblePath.map { g0Path =>
-				val gNodes = g0Path.map { g0Node =>
-					nodeMap(g0Node.id)
-				}
-				// Path is at most of length 3.
-				val builder = g.newPathBuilder(gNodes.head)(sizeHint = 3)
-				builder.++=(gNodes.tail).result()
-			}
+			path.head.diSuccessors
+			val newPaths = path.head.neighbors.filterNot(visited).map(_ :: path)
+			val newQ = poppedQ.enqueue(newPaths)
+			dijkstra6(g)(newQ, dest, visited + path.head)
 		}
-		*/
 	}
 
 }
