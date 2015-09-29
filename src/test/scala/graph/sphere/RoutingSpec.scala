@@ -33,7 +33,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
-		val route = Routing.route(g, g.nodes.size)(g.get(SphereNode(1)), g.get(SphereNode(5)), nodeMap)
+		val route = Routing.route(g)(g.get(SphereNode(1)), g.get(SphereNode(5)))
 
 		route.nodes.toList should be(List(SphereNode(1), SphereNode(5)))
 		route.edges.toList should be(List(SphereNode(1) ~ SphereNode(5)))
@@ -51,7 +51,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
-		val route = Routing.route(g, g.nodes.size)(g.get(SphereNode(1)), g.get(SphereNode(4)), nodeMap)
+		val route = Routing.route(g)(g.get(SphereNode(1)), g.get(SphereNode(4)))
 
 		route.nodes.toList should (equal (List(SphereNode(1), SphereNode(3), SphereNode(4)))
 			or equal (List(SphereNode(1), SphereNode(2), SphereNode(4))))
@@ -67,7 +67,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 			val node1 = g.nodes.find(_.id == 29).get
 			val node2 = g.nodes.find(_.id == 16).get
 			val shortestPath = node1.shortestPathTo(node2).get
-			val route = Routing.route(g, g.nodes.size)(node1, node2, nodeMap)
+			val route = Routing.route(g)(node1, node2)
 			(shortestPath, route)
 		}
 
@@ -87,7 +87,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val shortestPath = node1.shortestPathTo(node2).get
 
 		(1 until 10000).par.foreach { _ =>
-				val route = Routing.route(g, g.nodes.size)(node1, node2, nodeMap)
+				val route = Routing.route(g)(node1, node2)
 				route.edges.size should equal(shortestPath.edges.size)
 		}
 	}
@@ -114,12 +114,11 @@ class RoutingSpec extends FlatSpec with Matchers {
 		Random.setSeed(System.currentTimeMillis())
 		graphs.drop(5).take(2).foreach { g =>
 			val nrNodes = g.nodes.size
-			val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
 			Random.shuffle(g.nodes.toSeq.combinations(2)).take(1000).foreach {
 				case Seq(node1, node2) =>
 					val shortestPath = node1.shortestPathTo(node2).get
-					val route = Routing.route(g, nrNodes)(node1, node2, nodeMap)
+					val route = Routing.route(g)(node1, node2)
 					assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
 			}
 		}
@@ -131,9 +130,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val node1 = graph.nodes.find(_.id == 422).get
 		val node2 = graph.nodes.find(_.id == 212).get
 		val shortestPath = node1.shortestPathTo(node2).get
-
-		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-		val path = Routing.route(graph, graph.nodes.size)(node1,node2, nodeMap)
+		val path = Routing.route(graph)(node1,node2)
 
 		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
 		assert(path.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${path.nodes}")
@@ -147,8 +144,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val node2 = graph.nodes.find(_.id == 970).get
 		val shortestPath = node1.shortestPathTo(node2).get
 
-		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-		val path = Routing.route(graph, graph.nodes.size)(node1,node2, nodeMap)
+		val path = Routing.route(graph)(node1,node2)
 
 		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
 		assert(path.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${path.nodes}")
@@ -162,8 +158,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val node2 = graph.nodes.find(_.id == 1725).get
 		val shortestPath = node1.shortestPathTo(node2).get
 
-		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-		val path = Routing.route(graph, graph.nodes.size)(node1,node2, nodeMap)
+		val path = Routing.route(graph)(node1,node2)
 
 		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
 		assert(path.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${path.nodes}")
@@ -176,8 +171,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val node2 = graph.nodes.find(_.id == 6).get
 		val shortestPath = node1.shortestPathTo(node2).get
 
-		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-		val path = Routing.route(graph, graph.nodes.size)(node1,node2, nodeMap)
+		val path = Routing.route(graph)(node1,node2)
 
 		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
 		assert(path.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${path.nodes}")
@@ -191,8 +185,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 		val node2 = graph.nodes.find(_.id == 262).get
 		val shortestPath = node1.shortestPathTo(node2).get
 
-		val nodeMap = graph.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-		val path = Routing.route(graph, graph.nodes.size)(node1,node2, nodeMap)
+		val path = Routing.route(graph)(node1,node2)
 
 		assert(path.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${path.nodes}")
 		assert(path.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${path.nodes}")
@@ -201,13 +194,9 @@ class RoutingSpec extends FlatSpec with Matchers {
 
 	def shortestPaths(g : Graph[Node, UnDiEdge], g0: Graph[Node, UnDiEdge]): Unit = {
 		var counter = 0L
-
-		val nrNodes = g.nodes.size
-		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-
 		val shortestPaths = ShortestPaths.allDistances(g)
 		shortestPaths.par.foreach { case ((node1, node2), shortestDistance) =>
-			val route = Routing.route(g, nrNodes)(node1, node2, nodeMap)
+			val route = Routing.route(g)(node1, node2)
 			assert(route.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${route.nodes}")
 			assert(route.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${route.nodes}")
 			assert(route.edges.size == shortestDistance, s"Shortestpath was unequal to shortest route for nodes ($node1, $node2).\n${route.nodes}")
@@ -221,13 +210,10 @@ class RoutingSpec extends FlatSpec with Matchers {
 
 		var counter = 0L
 
-		val nrNodes = g.nodes.size
-		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-
 		g.nodes.toSeq.combinations(2).foreach {
 			case Seq(node1, node2) =>
 				val shortestPath = node1.shortestPathTo(node2).get
-				val route = Routing.route(g, nrNodes)(node1, node2, nodeMap)
+				val route = Routing.route(g)(node1, node2)
 				assert(route.nodes.head == node1, s"Startnode not equal nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
 				assert(route.nodes.last == node2, s"Endnode not equal for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
 				assert(route.edges.size == shortestPath.edges.size, s"Shortestpath was unequal than shortest route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")

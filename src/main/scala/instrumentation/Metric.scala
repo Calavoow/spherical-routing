@@ -11,7 +11,17 @@ import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
 
 object Metric {
 	trait Router[N] {
-		def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path
+		/**
+		 * Route on the graph {{g}} from {{node1}} to {{node2}}.
+		 *
+		 * We assume that the graph is connected.
+		 *
+		 * @param g The graph to route on.
+		 * @param node1 The start node.
+		 * @param node2 The end node.
+		 * @return A path on {{g}} from start to end node.
+		 */
+		def route(g: Graph[N, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path
 	}
 
 	def countShortestPaths[N : Layered : ID](g: Graph[N, UnDiEdge], nrLayers: Int): Map[Int, Int] = {
@@ -63,7 +73,7 @@ object Metric {
 			// Map the group in parallel.
 			group.par.map{
 				case Seq(node1, node2) =>
-					router.route(g, graphSize)(node1, node2, nodeMap)
+					router.route(g)(node1, node2)
 			}
 				// Transform the path to a map of layer nr and count.
 				.map(pathToLayers _)
@@ -101,7 +111,7 @@ object Metric {
 			val nodes = randomDifNodes(threadLocalRandom).take(2*concurrentPaths)
 			val nodeSeq = nodes.toIndexedSeq
 			val routes = nodeSeq.grouped(2).map {
-				case Seq(node1, node2) ⇒ router.route(g, nodeSeq.size)(node1, node2, nodeMap)
+				case Seq(node1, node2) ⇒ router.route(g)(node1, node2)
 			}
 			// Check if any two paths collide.
 			val collidingEdge = collisionEdge(g)(routes)

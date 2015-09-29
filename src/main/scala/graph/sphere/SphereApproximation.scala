@@ -101,7 +101,6 @@ object SphereApproximation {
 	 * @param g
 	 * @param e The edge which generates the node, for which to find triangles.
 	 * @param iteration The current iteration number (k). Used to find only triangle involving only edges in E_k.
-	 ang* @return
 	 */
 	def relevantTriangles(g: Graph[Node, UnDiEdge])(e: g.EdgeT, iteration: Int) : Set[Set[g.NodeT]] = {
 		val node1 :: node2 :: _ = e.nodes.toList

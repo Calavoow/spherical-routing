@@ -12,10 +12,14 @@ import scalax.collection.immutable.Graph
 import Units._
 
 object Routing extends Router[Node] {
-	override def route(g: Sphere, graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path = {
+	override def route(g: Sphere)(node1: g.NodeT, node2: g.NodeT): g.Path = {
+		Random.setSeed(System.currentTimeMillis())
 		pathRecursive(g)(node1, node2, List.empty, List.empty)
 	}
 
+	/**
+	 * An implementation of route on the Sphere that is tail recursive.
+	 */
 	@tailrec
 	def pathRecursive(g: Sphere)(alpha: g.NodeT, beta: g.NodeT, pathA: List[g.NodeT], pathB: List[g.NodeT]) : g.Path = {
 		val localPath = localSearch(g)(alpha, beta)
@@ -32,6 +36,11 @@ object Routing extends Router[Node] {
 		}
 	}
 
+	/**
+	 * If d(alpha, beta) > 6 then do a step to a parent.
+	 *
+	 * This function calculates the parent to do a step to.
+	 */
 	def incrementPath(g: Sphere)(v: g.NodeT) : g.NodeT = {
 		def pGood(vertices: Set[g.NodeT]): Set[g.NodeT] = {
 			val parents = vertices.flatMap{ alpha =>
@@ -44,7 +53,7 @@ object Routing extends Router[Node] {
 
 		val bSet = pGood(Set(v))
 
-		// calculate f(aSet)
+		// calculate f(aSet), the potential parents.
 		val potentialParents = if(bSet.head.layer == 0) {
 			bSet
 		} else {
@@ -60,12 +69,14 @@ object Routing extends Router[Node] {
 		Random.shuffle(potentialParents.toSeq).head
 	}
 
+	/**
+	 * LocalSearch looks in the 6th order neighbourhood of alpha for beta,
+	 * and gives a path to it if its in the neighbourhood.
+	 */
 	def localSearch(g: Sphere)(alpha : g.NodeT, beta: g.NodeT) : Option[g.Path] = {
 		val pathNodes = dijkstra6(g)(Queue(List(alpha)), beta, Set.empty[g.NodeT])
 		pathNodes.map { nodes =>
-			val builder = g.newPathBuilder(alpha)
-			builder ++= nodes
-			builder.result()
+			Util.joinPaths(g)(nodes)
 		}
 	}
 

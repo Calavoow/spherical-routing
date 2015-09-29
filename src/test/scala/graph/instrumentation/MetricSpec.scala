@@ -15,8 +15,8 @@ class MetricSpec extends FlatSpec with Matchers {
 
 		val graphSize = g.nodes.size
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node ⇒ implicitly[ID[ring.Units.Node]].id(node))
-		val route1 = ring.Routing.route(g, graphSize)(n1, n2, nodeMap)
-		val route2 = ring.Routing.route(g, graphSize)(v1, v2, nodeMap)
+		val route1 = ring.Routing.route(g)(n1, n2)
+		val route2 = ring.Routing.route(g)(v1, v2)
 		val collidingEdge = Metric.collisionEdge(g)(List(route1, route2))
 		assert(collidingEdge.isDefined)
 		val layer = Layered.edgeLayer[ring.Units.Node](collidingEdge.get.toOuter).layer(collidingEdge.get.toOuter, 4)
@@ -33,10 +33,8 @@ class MetricSpec extends FlatSpec with Matchers {
 		val graphSize = g.nodes.size
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(node ⇒ implicitly[ID[ring.Units.Node]].id(node))
 
-		val route1 = ring.Routing.route(g, graphSize)(n1, n2, nodeMap)
-		println(route1)
-		val route2 = ring.Routing.route(g, graphSize)(v1, v2, nodeMap)
-		println(route2)
+		val route1 = ring.Routing.route(g)(n1, n2)
+		val route2 = ring.Routing.route(g)(v1, v2)
 		val collidingEdge = Metric.collisionEdge(g)(List(route1, route2))
 		assert(collidingEdge.isDefined)
 		println(collidingEdge)
@@ -75,10 +73,8 @@ class MetricSpec extends FlatSpec with Matchers {
 		val graphSize = g.nodes.size
 		val nodeMap = g.nodes.toIndexedSeq.sortBy(_.id)
 
-		val route1 = sphere.Routing.route(g, graphSize)(n1, n2, nodeMap)
-		println(route1)
-		val route2 = sphere.Routing.route(g, graphSize)(v1, v2, nodeMap)
-		println(route2)
+		val route1 = sphere.Routing.route(g)(n1, n2)
+		val route2 = sphere.Routing.route(g)(v1, v2)
 		val collidingEdge = Metric.collisionEdge(g)(List(route1, route2))
 		assert(collidingEdge.isDefined)
 		val layeredEdge = Layered.edgeLayer[sphere.Units.Node](collidingEdge.get.toOuter)

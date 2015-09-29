@@ -61,6 +61,9 @@ object Util {
 		}
 	}
 
+	/**
+	 * Add an ID to T.
+	 */
 	trait ID[T] {
 		def id(a: T): Int
 	}
@@ -85,7 +88,7 @@ object Util {
 	 * @tparam N The node type
 	 */
 	case class ShortestPathRouter[N]() extends Router[N] {
-		override def route(g: Graph[N, UnDiEdge], graphSize: Int)(node1: g.NodeT, node2: g.NodeT, nodeMap: IndexedSeq[g.NodeT]): g.Path = {
+		override def route(g: Graph[N, UnDiEdge])(node1: g.NodeT, node2: g.NodeT): g.Path = {
 			node1.shortestPathTo(node2).get
 		}
 	}
@@ -147,20 +150,23 @@ object Util {
 		factorial(n) / (factorial(k) * factorial(n-k))
 	}
 
-	def joinPaths(g: Graph[Node, UnDiEdge])(pathNodes: Traversable[g.NodeT]*): g.Path = {
+	/**
+	 * Join 1 or more Traversables into a path.
+	 */
+	def joinPaths[T](g: Graph[T, UnDiEdge])(pathNodes: Traversable[g.NodeT]*): g.Path = {
 		val nodes = pathNodes.reduce(_ ++ _)
 		val path = g.newPathBuilder(nodes.head)(sizeHint = 64)
 		path ++= nodes
 		path.result()
 	}
-	def joinWalks(g: Graph[Node, UnDiEdge])(pathNodes: Traversable[g.NodeT]*): g.Walk = {
+
+	/**
+	 * Join 1 or more Traversables into a Walk.
+	 */
+	def joinWalks[T](g: Graph[T, UnDiEdge])(pathNodes: Traversable[g.NodeT]*): g.Walk = {
 		val nodes = pathNodes.reduce(_ ++ _)
 		val path = g.newWalkBuilder(nodes.head)(sizeHint = 64)
 		path ++= nodes
-//		val completePath = pathNodes.foldLeft[g.PathBuilder](path) {
-//			case (curPath, joinPath) =>
-//				curPath ++= joinPath
-//		}.result()
 		path.result()
 	}
 

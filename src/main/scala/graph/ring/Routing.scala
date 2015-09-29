@@ -1,5 +1,6 @@
 package graph.ring
 
+import graph.Util
 import instrumentation.Metric.Router
 
 import scala.annotation.tailrec
@@ -11,7 +12,7 @@ import Units._
 import graph.Util.TwoPower
 
 object Routing extends Router[Node] {
-	override def route(g: Ring, graphSize: Int)(from: g.NodeT, to: g.NodeT, nodeMap: IndexedSeq[g.NodeT]) : g.Path = {
+	override def route(g: Ring)(from: g.NodeT, to: g.NodeT) : g.Path = {
 		Random.setSeed(System.currentTimeMillis())
 		/**
 		 * Recursively fill the steps towards a common node.
@@ -32,8 +33,8 @@ object Routing extends Router[Node] {
 					val randomNode = Random.shuffle(commonNeighbours.toSeq).head
 					recursion(randomNode :: as, bs, i+1)
 				} else {
-					val aNext = step(g, graphSize)(as.head, i)
-					val bNext = step(g, graphSize)(bs.head, i)
+					val aNext = step(g)(as.head, i)
+					val bNext = step(g)(bs.head, i)
 					recursion(aNext :: as, bNext :: bs, i+1)
 				}
 			}
@@ -41,14 +42,11 @@ object Routing extends Router[Node] {
 
 		// Build a path out of the node lists.
 		val (as, bs) = recursion(List(from), List(to), 1)
-		val pathBuilder = g.newPathBuilder(from)(sizeHint = 64)
-		pathBuilder ++= as.reverse
-		pathBuilder ++= bs
-		pathBuilder.result()
+		Util.joinPaths(g)(as.reverse, bs)
 	}
 
 
-	private def step(g : Graph[Node, UnDiEdge], abcdef: Int)(head: g.NodeT, iteration: Int) : g.NodeT = {
+	private def step(g : Graph[Node, UnDiEdge])(head: g.NodeT, iteration: Int) : g.NodeT = {
 		val twoIMinusOne = (iteration-1).twoPowerOf
 		val n = g.nodes.size
 		// Explicitly get Int values, needed to perform Integer addition and not String concatenation.

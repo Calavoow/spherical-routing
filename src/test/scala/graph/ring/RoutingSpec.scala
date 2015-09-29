@@ -24,7 +24,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 			g.nodes.toSeq.combinations(2).foreach {
 				case Seq(node1,node2) ⇒
 //					val shortestPath = node1.shortestPathTo(node2).get
-					val routePath = Routing.route(g, graphSize)(node1, node2, nodeMap)
+					val routePath = Routing.route(g)(node1, node2)
 					assert(routePath.nodes.head == node1, s"Start node was not equal for ($node1, $node2)")
 					assert(routePath.nodes.last == node2, s"End node was not equal for ($node1, $node2)")
 					assert(routePath.edges.size == allDistances(node1,node2),

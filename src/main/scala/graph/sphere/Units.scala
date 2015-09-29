@@ -7,11 +7,20 @@ import scalax.collection.GraphPredef._
 import scalax.collection.immutable.Graph
 
 object Units {
+	type Node = SphereNode
 	type Sphere = Graph[Node, UnDiEdge]
 
 	object SphereNode {
+		/**
+		 * Create a [[Node]] on the 0th layer.
+		 * @param i The ID of the the node.
+		 */
 		def apply(i: Int) = new SphereNode(i, 0)
 
+		/**
+		 * Create a [[Node]] the is the child of the given parents.
+		 * @param id The ID of the node.
+		 */
 		def apply(id: Int, parent1: SphereNode, parent2: SphereNode) = {
 			val layer = Math.max(parent1.layer, parent2.layer) + 1
 			new SphereNode(id, layer)
@@ -67,10 +76,18 @@ object Units {
 		}
 		*/
 
+		/**
+		 * A functions that find the parents of a given node.
+		 *
+		 * @return A [[Traversable]] over the parents of the node, could be empty if its on layer 0.
+		 */
 		def parents(g: Sphere)(v: g.NodeT) = {
 			v.innerNodeTraverser.withMaxDepth(1).filter(_.layer < v.layer)
 		}
 
+		/**
+		 * Adds a layer method to the [[Node]].
+		 */
 		implicit object LayeredLabel extends Layered[SphereNode] {
 			def layer(x: SphereNode, nrLayers: Int) = {
 				// nrLayers - 1 - x.layer
@@ -103,7 +120,6 @@ object Units {
 		override def hashCode(): Int = id.hashCode()
 	}
 
-	type Node = SphereNode
 	/**
 	 * The icosahedron manually encoded as a Graph object.
 	 */
