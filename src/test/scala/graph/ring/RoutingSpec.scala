@@ -19,8 +19,6 @@ class RoutingSpec extends FlatSpec with Matchers {
 			val g = Units.ring(subdivisions)
 
 			val allDistances = ShortestPaths.allDistances(g)
-			val graphSize = g.nodes.size
-			val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 			g.nodes.toSeq.combinations(2).foreach {
 				case Seq(node1,node2) ⇒
 //					val shortestPath = node1.shortestPathTo(node2).get

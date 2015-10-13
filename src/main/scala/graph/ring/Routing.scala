@@ -45,7 +45,6 @@ object Routing extends Router[Node] {
 		Util.joinPaths(g)(as.reverse, bs)
 	}
 
-
 	private def step(g : Graph[Node, UnDiEdge])(head: g.NodeT, iteration: Int) : g.NodeT = {
 		val twoIMinusOne = (iteration-1).twoPowerOf
 		val n = g.nodes.size

@@ -92,21 +92,21 @@ object Routing extends Router[Node] {
 	 * @return Some path of nodes, or None if there is no path of less than 6.
 	 */
 	@tailrec
-	def dijkstra6(g: Sphere)(q: Queue[List[g.NodeT]], dest: g.NodeT, visited: Set[g.NodeT]) : Option[List[g.NodeT]] = {
-		val (path, poppedQ) = q.dequeue
-		if (path.size > 7) {
-			// Paths include start node, so 6 hops is 7 nodes.
-			// Stop as soon as we start processing paths of more than 6 hops.
-			None
-		} else if(path.head == dest) {
-			Some(path.reverse)
-		} else {
-			path.head.diSuccessors
-			val newPaths = path.head.neighbors.filterNot(visited).map(_ :: path)
-			val newQ = poppedQ.enqueue(newPaths)
-			dijkstra6(g)(newQ, dest, visited + path.head)
-		}
+	def dijkstra6(g: Sphere)(q: Queue[List[g.NodeT]], dest: g.NodeT, visited: Set[g.NodeT]) : Option[List[g.NodeT]] = q match {
+		case path +: poppedQ =>
+			if(path.head == dest) {
+				Some(path.reverse)
+			} else {
+				// Paths include start node, so 6 hops is 7 nodes.
+				// Do not add paths to the queue, that are more than 6 hops.
+				if(path.size < 7) {
+					val newPaths = path.head.neighbors.filterNot(visited).map(_ :: path)
+					dijkstra6(g)(poppedQ.enqueue(newPaths), dest, visited + path.head)
+				} else {
+					dijkstra6(g)(poppedQ, dest, visited + path.head)
+				}
+			}
+		case _ => None
 	}
-
 }
 

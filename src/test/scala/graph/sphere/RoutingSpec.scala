@@ -31,8 +31,6 @@ class RoutingSpec extends FlatSpec with Matchers {
 			SphereNode(1) ~ SphereNode(5)
 		)
 
-		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-
 		val route = Routing.route(g)(g.get(SphereNode(1)), g.get(SphereNode(5)))
 
 		route.nodes.toList should be(List(SphereNode(1), SphereNode(5)))
@@ -49,8 +47,6 @@ class RoutingSpec extends FlatSpec with Matchers {
 			SphereNode(1) ~ SphereNode(5)
 		)
 
-		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
-
 		val route = Routing.route(g)(g.get(SphereNode(1)), g.get(SphereNode(4)))
 
 		route.nodes.toList should (equal (List(SphereNode(1), SphereNode(3), SphereNode(4)))
@@ -62,7 +58,6 @@ class RoutingSpec extends FlatSpec with Matchers {
 	it should "find the same path 100 times" in {
 		val paths = for(_ <- 1 to 100) yield {
 			val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
-			val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
 			val node1 = g.nodes.find(_.id == 29).get
 			val node2 = g.nodes.find(_.id == 16).get
@@ -80,7 +75,6 @@ class RoutingSpec extends FlatSpec with Matchers {
 
 	it should "find an equivalent path 10000 times in parellel" in {
 		val g = SphereApproximation.repeatedSubdivision(triangle).drop(3).next()
-		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[Units.Node]].id(node))
 
 		val node1 = g.nodes.find(_.id == 29).get
 		val node2 = g.nodes.find(_.id == 16).get
