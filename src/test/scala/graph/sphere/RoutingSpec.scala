@@ -113,7 +113,7 @@ class RoutingSpec extends FlatSpec with Matchers {
 				case Seq(node1, node2) =>
 					val shortestPath = node1.shortestPathTo(node2).get
 					val route = Routing.route(g)(node1, node2)
-					assert(shortestPath.edges.size + 1 >= route.edges.size, s"Shortestpath + 1 was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
+					assert(shortestPath.edges.size >= route.edges.size, s"Shortestpath was longer than route for nodes ($node1, $node2).\n${shortestPath.nodes}\n${route.nodes}")
 			}
 		}
 	}

@@ -106,10 +106,9 @@ object SphereApproximation {
 		val node1 :: node2 :: _ = e.nodes.toList
 		val sameNeighbors = node1.neighbors.filter { neighbor ⇒
 			val neighborsBoth = node2.neighbors.contains(neighbor)
-			// Do not use edges of a previous layer.
-			val correctLayer =
-				(node1.layer == iteration || neighbor.layer == iteration) &&
-				(node2.layer == iteration || neighbor.layer == iteration)
+			val correctLayer = node1.layer == node2.layer || neighbor.layer == iteration
+//				(node1.layer == iteration || neighbor.layer == iteration) &&
+//				(node2.layer == iteration || neighbor.layer == iteration)
 			neighborsBoth && correctLayer
 		}
 

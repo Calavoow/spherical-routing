@@ -62,9 +62,9 @@ object Metric {
 		}
 
 		// Cache graphSize because it's O(n)
-		val graphSize = g.nodes.size
+//		val graphSize = g.nodes.size
 		// Create a nodeMap because looking up the ID is also O(n)
-		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[T]].id(node))
+//		val nodeMap = g.nodes.toIndexedSeq.sortBy(node => implicitly[ID[T]].id(node))
 
 		// Split into smaller computation groups, and reduce them individually.
 		// To prevent memory issues.
@@ -75,10 +75,10 @@ object Metric {
 				case Seq(node1, node2) =>
 					router.route(g)(node1, node2)
 			}
-				// Transform the path to a map of layer nr and count.
-				.map(pathToLayers _)
-				// Reduce the map of keys to save memory size.
-				.reduce(sumMapByKey)
+			// Transform the path to a map of layer nr and count.
+			.map(pathToLayers _)
+			// Reduce the map of keys to save memory size.
+			.reduce(sumMapByKey)
 		}.reduce(sumMapByKey _)
 	}
 

@@ -30,11 +30,11 @@ object Main {
 		// Write headers to files.
 		ringFile.write("nodes,concurrentpaths\n")
 		ringFile.flush()
-		sphereFile.write("nodes, concurrentpaths\n")
+		sphereFile.write("nodes,concurrentpaths\n")
 		sphereFile.flush()
 
 		val g0 = sphere.Units.icosahedron
-		val samples = 10000
+		val samples = 1000
 
 		val rings : Iterator[Ring] = Iterator.from(0).map { i ⇒
 			println("Subdividing ring")
