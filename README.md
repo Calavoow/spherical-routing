@@ -1,6 +1,5 @@
 # spherical-routing
 Routing on a spherical polygon.
-This code was used to generate results for the "Shortcuts to Quantum Network Routing" paper ([arXiv:1610.05238](https://arxiv.org/abs/1610.05238)).
 
 ## How to run
 Install Scala Build Tool (sbt).
